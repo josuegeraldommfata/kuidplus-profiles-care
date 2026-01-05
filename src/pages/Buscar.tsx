@@ -115,14 +115,14 @@ export default function Buscar() {
       <div className="space-y-2">
         <label className="text-sm font-medium">Estado</label>
         <Select
-          value={filters.state}
-          onValueChange={(value) => setFilters((f) => ({ ...f, state: value }))}
+          value={filters.state || "all"}
+          onValueChange={(value) => setFilters((f) => ({ ...f, state: value === "all" ? "" : value }))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos os estados" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os estados</SelectItem>
+            <SelectItem value="all">Todos os estados</SelectItem>
             {brazilianStates.map((state) => (
               <SelectItem key={state} value={state}>
                 {state}
@@ -144,16 +144,16 @@ export default function Buscar() {
       <div className="space-y-2">
         <label className="text-sm font-medium">Profissão</label>
         <Select
-          value={filters.profession}
+          value={filters.profession || "all"}
           onValueChange={(value) =>
-            setFilters((f) => ({ ...f, profession: value }))
+            setFilters((f) => ({ ...f, profession: value === "all" ? "" : value }))
           }
         >
           <SelectTrigger>
             <SelectValue placeholder="Todas as profissões" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as profissões</SelectItem>
+            <SelectItem value="all">Todas as profissões</SelectItem>
             <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
             <SelectItem value="Técnico(a) de Enfermagem">
               Técnico(a) de Enfermagem
@@ -165,14 +165,14 @@ export default function Buscar() {
       <div className="space-y-2">
         <label className="text-sm font-medium">Sexo</label>
         <Select
-          value={filters.sex}
-          onValueChange={(value) => setFilters((f) => ({ ...f, sex: value }))}
+          value={filters.sex || "all"}
+          onValueChange={(value) => setFilters((f) => ({ ...f, sex: value === "all" ? "" : value }))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="Masculino">Masculino</SelectItem>
             <SelectItem value="Feminino">Feminino</SelectItem>
           </SelectContent>
@@ -182,16 +182,16 @@ export default function Buscar() {
       <div className="space-y-2">
         <label className="text-sm font-medium">Faixa de valor (12h)</label>
         <Select
-          value={filters.priceRange}
+          value={filters.priceRange || "all"}
           onValueChange={(value) =>
-            setFilters((f) => ({ ...f, priceRange: value }))
+            setFilters((f) => ({ ...f, priceRange: value === "all" ? "" : value }))
           }
         >
           <SelectTrigger>
             <SelectValue placeholder="Todas as faixas" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as faixas</SelectItem>
+            <SelectItem value="all">Todas as faixas</SelectItem>
             {priceRanges.map((range) => (
               <SelectItem key={range.label} value={range.label}>
                 {range.label}
@@ -204,16 +204,16 @@ export default function Buscar() {
       <div className="space-y-2">
         <label className="text-sm font-medium">Avaliação mínima</label>
         <Select
-          value={filters.minRating}
+          value={filters.minRating || "all"}
           onValueChange={(value) =>
-            setFilters((f) => ({ ...f, minRating: value }))
+            setFilters((f) => ({ ...f, minRating: value === "all" ? "" : value }))
           }
         >
           <SelectTrigger>
             <SelectValue placeholder="Qualquer avaliação" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Qualquer avaliação</SelectItem>
+            <SelectItem value="all">Qualquer avaliação</SelectItem>
             <SelectItem value="4.5">4.5+ estrelas</SelectItem>
             <SelectItem value="4.0">4.0+ estrelas</SelectItem>
             <SelectItem value="3.5">3.5+ estrelas</SelectItem>
