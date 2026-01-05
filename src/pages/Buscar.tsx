@@ -12,13 +12,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
-import { mockProfessionals, brazilianStates, priceRanges } from '@/data/mockData';
+import { mockProfessionals, brazilianStates, priceRanges, professionOptions, getDisplayName, calculateAge } from '@/data/mockData';
 import {
   Search,
   Filter,
   CheckCircle,
   MapPin,
   X,
+  Sparkles,
+  Play,
+  Eye,
 } from 'lucide-react';
 import {
   Sheet,
@@ -83,15 +86,19 @@ export default function Buscar() {
       result = result.filter((p) => p.rating >= minRating);
     }
 
-    // Sort
-    if (sortBy === 'recent') {
-      result.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    } else {
-      result.sort((a, b) => b.rating - a.rating);
-    }
+    // Sort - highlighted first, then by selected criteria
+    result.sort((a, b) => {
+      // Highlighted always first
+      if (a.isHighlighted && !b.isHighlighted) return -1;
+      if (!a.isHighlighted && b.isHighlighted) return 1;
+      
+      // Then by selected sort
+      if (sortBy === 'recent') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else {
+        return b.rating - a.rating;
+      }
+    });
 
     return result;
   }, [searchTerm, filters, sortBy]);
@@ -142,7 +149,7 @@ export default function Buscar() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Profissão</label>
+        <label className="text-sm font-medium">Categoria</label>
         <Select
           value={filters.profession || "all"}
           onValueChange={(value) =>
@@ -150,14 +157,15 @@ export default function Buscar() {
           }
         >
           <SelectTrigger>
-            <SelectValue placeholder="Todas as profissões" />
+            <SelectValue placeholder="Todas as categorias" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as profissões</SelectItem>
-            <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
-            <SelectItem value="Técnico(a) de Enfermagem">
-              Técnico(a) de Enfermagem
-            </SelectItem>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {professionOptions.map((prof) => (
+              <SelectItem key={prof} value={prof}>
+                {prof}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -180,7 +188,7 @@ export default function Buscar() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Faixa de valor (12h)</label>
+        <label className="text-sm font-medium">Valor por 12 horas</label>
         <Select
           value={filters.priceRange || "all"}
           onValueChange={(value) =>
@@ -230,6 +238,10 @@ export default function Buscar() {
     </div>
   );
 
+  // Separate highlighted and regular professionals
+  const highlightedProfessionals = filteredProfessionals.filter(p => p.isHighlighted);
+  const regularProfessionals = filteredProfessionals.filter(p => !p.isHighlighted);
+
   return (
     <Layout>
       <div className="min-h-screen bg-muted/30">
@@ -241,7 +253,7 @@ export default function Buscar() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome, cidade ou profissão..."
+                  placeholder="Buscar por nome, cidade ou categoria..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -269,7 +281,7 @@ export default function Buscar() {
                     <Button variant="outline" className="md:hidden relative">
                       <Filter className="h-4 w-4" />
                       {activeFiltersCount > 0 && (
-                        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full gradient-highlight text-white text-xs flex items-center justify-center">
                           {activeFiltersCount}
                         </span>
                       )}
@@ -326,64 +338,134 @@ export default function Buscar() {
                   </Button>
                 </Card>
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredProfessionals.map((professional, index) => (
-                    <Card
-                      key={professional.id}
-                      className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group animate-fade-in"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                      onClick={() =>
-                        navigate(`/profissional/${professional.id}`)
-                      }
-                    >
-                      <div className="aspect-[4/3] relative overflow-hidden">
-                        <img
-                          src={professional.profileImage}
-                          alt={professional.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute top-3 right-3">
-                          {professional.backgroundCheck && (
-                            <div className="bg-success text-success-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Verificado
-                            </div>
-                          )}
-                        </div>
+                <div className="space-y-6">
+                  {/* Highlighted Professionals Section */}
+                  {highlightedProfessionals.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-gradient-highlight" />
+                        <h3 className="font-semibold text-gradient-highlight">Profissionais em Destaque</h3>
                       </div>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div>
-                            <h3 className="font-semibold">
-                              {professional.name}
-                            </h3>
-                            <p className="text-sm text-primary">
-                              {professional.profession}
-                            </p>
-                          </div>
-                          <StarRating
-                            rating={professional.rating}
-                            totalRatings={professional.totalRatings}
-                            size="sm"
-                            showCount={false}
-                          />
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {professional.city}, {professional.state}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            R$ {professional.priceRange.min}–
-                            {professional.priceRange.max}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {professional.experienceYears} anos exp.
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {highlightedProfessionals.map((professional, index) => (
+                          <Card
+                            key={professional.id}
+                            className="overflow-hidden hover:shadow-highlight transition-all cursor-pointer group animate-fade-in card-highlighted"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                            onClick={() => navigate(`/profissional/${professional.id}`)}
+                          >
+                            <div className="aspect-square relative overflow-hidden">
+                              <img
+                                src={professional.profileImage}
+                                alt={professional.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-2 left-2 right-2 flex justify-between">
+                                <div className="px-2 py-1 rounded-full gradient-highlight text-white text-[10px] font-medium flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" />
+                                  Destaque
+                                </div>
+                                {professional.videoUrl && (
+                                  <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
+                                    <Play className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              {professional.backgroundCheck && (
+                                <div className="absolute bottom-2 left-2 bg-success text-success-foreground px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Verificado
+                                </div>
+                              )}
+                            </div>
+                            <CardContent className="p-3">
+                              <h3 className="font-semibold text-sm truncate">{professional.name}</h3>
+                              <p className="text-xs text-gradient-highlight font-medium">{professional.profession}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {professional.city}, {professional.region}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between mt-2">
+                                <StarRating
+                                  rating={professional.rating}
+                                  totalRatings={professional.totalRatings}
+                                  size="sm"
+                                  showCount={false}
+                                />
+                                <span className="text-xs font-medium">
+                                  R$ {professional.priceRange.min}–{professional.priceRange.max}
+                                </span>
+                              </div>
+                              {professional.highlightPhrase && (
+                                <p className="text-[10px] text-muted-foreground mt-2 line-clamp-2 italic">
+                                  {professional.highlightPhrase}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+                                <Eye className="w-3 h-3" />
+                                {professional.weeklyViews} acessos esta semana
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Regular Professionals Section */}
+                  {regularProfessionals.length > 0 && (
+                    <div>
+                      {highlightedProfessionals.length > 0 && (
+                        <h3 className="font-semibold mb-4 text-muted-foreground">Outros Profissionais</h3>
+                      )}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {regularProfessionals.map((professional, index) => (
+                          <Card
+                            key={professional.id}
+                            className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group animate-fade-in"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                            onClick={() => navigate(`/profissional/${professional.id}`)}
+                          >
+                            <div className="aspect-square relative overflow-hidden">
+                              <img
+                                src={professional.profileImage}
+                                alt={getDisplayName(professional.name, professional.isHighlighted)}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                            <CardContent className="p-3">
+                              <h3 className="font-semibold text-sm truncate">
+                                {getDisplayName(professional.name, professional.isHighlighted)}
+                              </h3>
+                              <p className="text-xs text-primary font-medium">{professional.profession}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {professional.city}, {professional.region}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between mt-2">
+                                <StarRating
+                                  rating={professional.rating}
+                                  totalRatings={professional.totalRatings}
+                                  size="sm"
+                                  showCount={false}
+                                />
+                                <span className="text-xs font-medium">
+                                  R$ {professional.priceRange.min}–{professional.priceRange.max}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-2">
+                                {professional.experienceYears} anos de exp. • {professional.availability === 'hospital' ? 'Hospital' : professional.availability === 'domicilio' ? 'Domicílio' : 'Hosp/Dom'}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

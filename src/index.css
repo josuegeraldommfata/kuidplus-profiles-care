@@ -45,6 +45,11 @@
 
     --radius: 0.75rem;
 
+    /* Highlight gradient - Light Blue to Lilac */
+    --highlight-start: 195 85% 55%;
+    --highlight-end: 270 70% 65%;
+    --gradient-highlight: linear-gradient(135deg, hsl(195, 85%, 55%) 0%, hsl(270, 70%, 65%) 100%);
+    
     /* Custom gradients */
     --gradient-primary: linear-gradient(135deg, hsl(174, 62%, 40%) 0%, hsl(174, 72%, 50%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(180, 20%, 99%) 0%, hsl(174, 40%, 96%) 100%);
@@ -55,6 +60,7 @@
     --shadow-md: 0 4px 6px -1px hsl(200 25% 15% / 0.07), 0 2px 4px -2px hsl(200 25% 15% / 0.05);
     --shadow-lg: 0 10px 15px -3px hsl(200 25% 15% / 0.08), 0 4px 6px -4px hsl(200 25% 15% / 0.05);
     --shadow-glow: 0 0 20px hsl(174 62% 40% / 0.15);
+    --shadow-highlight: 0 0 25px hsl(270 70% 65% / 0.25);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 200 25% 15%;
@@ -101,9 +107,12 @@
     --input: 200 20% 20%;
     --ring: 174 62% 50%;
 
+    --gradient-highlight: linear-gradient(135deg, hsl(195, 85%, 50%) 0%, hsl(270, 70%, 60%) 100%);
     --gradient-primary: linear-gradient(135deg, hsl(174, 62%, 45%) 0%, hsl(174, 72%, 55%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(200, 25%, 8%) 0%, hsl(200, 25%, 12%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(200, 25%, 12%) 0%, hsl(200, 25%, 10%) 100%);
+
+    --shadow-highlight: 0 0 30px hsl(270 70% 60% / 0.3);
 
     --sidebar-background: 200 25% 10%;
     --sidebar-foreground: 180 20% 98%;
@@ -143,11 +152,57 @@
     background: var(--gradient-card);
   }
 
+  .gradient-highlight {
+    background: var(--gradient-highlight);
+  }
+
+  .text-gradient-highlight {
+    background: var(--gradient-highlight);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gradient-highlight {
+    border: 2px solid transparent;
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                var(--gradient-highlight) border-box;
+  }
+
+  .icon-gradient-highlight {
+    background: var(--gradient-highlight);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
 
+  .shadow-highlight {
+    box-shadow: var(--shadow-highlight);
+  }
+
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Highlight card styling */
+  .card-highlighted {
+    position: relative;
+    border: 2px solid transparent;
+    background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+                var(--gradient-highlight) border-box;
+  }
+
+  .card-highlighted::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: var(--gradient-highlight);
+    opacity: 0.1;
+    z-index: -1;
   }
 }

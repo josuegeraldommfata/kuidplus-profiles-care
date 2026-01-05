@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockProfessionals } from '@/data/mockData';
+import { mockProfessionals, calculateAge } from '@/data/mockData';
 import { StarRating } from '@/components/ui/StarRating';
 import {
   User,
@@ -22,6 +22,10 @@ import {
   Save,
   MessageCircle,
   TrendingUp,
+  MapPin,
+  Play,
+  Sparkles,
+  Calendar,
 } from 'lucide-react';
 
 export default function DashboardProfissional() {
@@ -30,13 +34,16 @@ export default function DashboardProfissional() {
 
   // Find the professional's profile (mock)
   const myProfile = mockProfessionals.find((p) => p.userId === user?.id) || mockProfessionals[0];
+  const age = calculateAge(myProfile.birthDate);
 
   const [formData, setFormData] = useState({
     bio: myProfile.bio,
     serviceArea: myProfile.serviceArea,
+    serviceRadius: myProfile.serviceRadius?.toString() || '10',
     hospitals: myProfile.hospitals.join(', '),
     priceMin: myProfile.priceRange.min.toString(),
     priceMax: myProfile.priceRange.max.toString(),
+    birthDate: myProfile.birthDate,
   });
 
   const handleSave = () => {
@@ -84,12 +91,25 @@ export default function DashboardProfissional() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold">Olá, {user.name}!</h1>
+              <h1 className="text-2xl font-bold">
+                Olá, <span className="text-gradient-highlight">{user.name}</span>!
+              </h1>
               <p className="text-muted-foreground">
                 Gerencie seu perfil profissional
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {myProfile.isHighlighted ? (
+                <Badge className="gradient-highlight text-white border-0">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Perfil Destaque
+                </Badge>
+              ) : (
+                <Button variant="outline" size="sm" className="text-gradient-highlight border-2">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Ativar Destaque
+                </Button>
+              )}
               {getStatusBadge(myProfile.status)}
               <Button
                 variant="outline"
@@ -101,13 +121,54 @@ export default function DashboardProfissional() {
             </div>
           </div>
 
+          {/* KUID+ Presentation Video */}
+          <Card className="mb-8 overflow-hidden border-2 border-dashed">
+            <CardContent className="p-0">
+              <div className="grid md:grid-cols-2 gap-0">
+                <div className="aspect-video bg-muted flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <div className="w-16 h-16 rounded-full gradient-highlight flex items-center justify-center mx-auto mb-4">
+                      <Play className="w-6 h-6 text-white ml-1" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Vídeo de apresentação KUID+
+                    </p>
+                  </div>
+                </div>
+                <div className="p-6 flex flex-col justify-center">
+                  <h3 className="text-lg font-semibold mb-2">
+                    <span className="text-gradient-highlight">Benefícios KUID+</span>
+                  </h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+                      Visibilidade para milhares de famílias
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+                      Contato direto via WhatsApp
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+                      Selo de verificação de antecedentes
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-500 mt-0.5" />
+                      Perfil Destaque: prioridade na busca + vídeo + referências
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Stats */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid sm:grid-cols-4 gap-4 mb-8">
             <Card className="animate-fade-in">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-xl gradient-highlight flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{myProfile.whatsappClicks}</p>
@@ -144,6 +205,22 @@ export default function DashboardProfissional() {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
                     <Eye className="w-6 h-6 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{myProfile.weeklyViews}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Visualizações (7 dias)
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{myProfile.experienceYears}</p>
@@ -184,18 +261,32 @@ export default function DashboardProfissional() {
                       />
                       <div>
                         <p className="font-semibold">{myProfile.name}</p>
-                        <p className="text-sm text-primary">{myProfile.profession}</p>
+                        <p className="text-sm text-gradient-highlight font-medium">{myProfile.profession}</p>
                         <p className="text-sm text-muted-foreground">
-                          {myProfile.age} anos • {myProfile.sex}
+                          {age} anos • {myProfile.sex}
                         </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                       <div>
+                        <p className="text-sm text-muted-foreground">Data de Nascimento</p>
+                        <p className="font-medium">
+                          {new Date(myProfile.birthDate).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Idade</p>
+                        <p className="font-medium">{age} anos</p>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground">Cidade</p>
                         <p className="font-medium">
                           {myProfile.city}, {myProfile.state}
                         </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Região</p>
+                        <p className="font-medium">{myProfile.region}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">WhatsApp</p>
@@ -205,9 +296,9 @@ export default function DashboardProfissional() {
                         <p className="text-sm text-muted-foreground">Email</p>
                         <p className="font-medium">{myProfile.email}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Valor 12h</p>
-                        <p className="font-medium">
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground">Valor por 12 horas</p>
+                        <p className="font-medium text-lg">
                           R$ {myProfile.priceRange.min} – R$ {myProfile.priceRange.max}
                         </p>
                       </div>
@@ -217,10 +308,50 @@ export default function DashboardProfissional() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Formações</CardTitle>
+                    <CardTitle className="text-lg">Área de Atendimento</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="w-5 h-5 text-gradient-highlight" />
+                        <span>{myProfile.serviceArea}</span>
+                      </div>
+                      {myProfile.serviceRadius && (
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-2">Raio de atendimento</p>
+                          <p className="text-2xl font-bold text-gradient-highlight">{myProfile.serviceRadius} km</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Disponibilidade</p>
+                        <Badge variant="secondary">
+                          {myProfile.availability === 'hospital' && 'Hospitais'}
+                          {myProfile.availability === 'domicilio' && 'Domicílio'}
+                          {myProfile.availability === 'ambos' && 'Hospital e Domicílio'}
+                        </Badge>
+                      </div>
+                      {myProfile.hospitals.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">Hospitais</p>
+                          <div className="flex flex-wrap gap-2">
+                            {myProfile.hospitals.map((hospital, i) => (
+                              <Badge key={i} variant="outline">
+                                {hospital}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Formações e Certificados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Cursos</p>
                         <div className="flex flex-wrap gap-2">
@@ -271,18 +402,40 @@ export default function DashboardProfissional() {
                     </div>
                   </div>
 
-                  {/* Video Upload */}
-                  <div className="space-y-2">
-                    <Label>Vídeo de Apresentação (até 60s)</Label>
-                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                      <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Arraste um vídeo ou clique para selecionar
-                      </p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Selecionar vídeo
-                      </Button>
+                  {/* Video Upload - Only for Highlighted */}
+                  {myProfile.isHighlighted && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Play className="w-4 h-4 text-gradient-highlight" />
+                        Vídeo de Apresentação (até 60s)
+                        <Badge className="gradient-highlight text-white text-[10px] ml-2">Destaque</Badge>
+                      </Label>
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Arraste um vídeo ou clique para selecionar
+                        </p>
+                        <Button variant="outline" size="sm" className="mt-2">
+                          Selecionar vídeo
+                        </Button>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Birth Date */}
+                  <div className="space-y-2">
+                    <Label htmlFor="birthDate">Data de Nascimento</Label>
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={formData.birthDate}
+                      onChange={(e) =>
+                        setFormData((f) => ({ ...f, birthDate: e.target.value }))
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Idade calculada automaticamente: {calculateAge(formData.birthDate)} anos
+                    </p>
                   </div>
 
                   {/* Bio */}
@@ -299,15 +452,31 @@ export default function DashboardProfissional() {
                   </div>
 
                   {/* Service Area */}
-                  <div className="space-y-2">
-                    <Label htmlFor="serviceArea">Área de Atendimento</Label>
-                    <Input
-                      id="serviceArea"
-                      value={formData.serviceArea}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, serviceArea: e.target.value }))
-                      }
-                    />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="serviceArea">Área de Atendimento</Label>
+                      <Input
+                        id="serviceArea"
+                        value={formData.serviceArea}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, serviceArea: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="serviceRadius" className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-gradient-highlight" />
+                        Raio de Atendimento (km)
+                      </Label>
+                      <Input
+                        id="serviceRadius"
+                        type="number"
+                        value={formData.serviceRadius}
+                        onChange={(e) =>
+                          setFormData((f) => ({ ...f, serviceRadius: e.target.value }))
+                        }
+                      />
+                    </div>
                   </div>
 
                   {/* Hospitals */}
@@ -327,7 +496,7 @@ export default function DashboardProfissional() {
                   {/* Price Range */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="priceMin">Valor mínimo (12h)</Label>
+                      <Label htmlFor="priceMin">Valor mínimo por 12 horas</Label>
                       <Input
                         id="priceMin"
                         type="number"
@@ -338,7 +507,7 @@ export default function DashboardProfissional() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="priceMax">Valor máximo (12h)</Label>
+                      <Label htmlFor="priceMax">Valor máximo por 12 horas</Label>
                       <Input
                         id="priceMax"
                         type="number"
@@ -364,7 +533,7 @@ export default function DashboardProfissional() {
                     </div>
                   </div>
 
-                  <Button onClick={handleSave} className="w-full sm:w-auto">
+                  <Button onClick={handleSave} className="w-full sm:w-auto gradient-highlight border-0">
                     <Save className="mr-2 h-4 w-4" />
                     Salvar alterações
                   </Button>
