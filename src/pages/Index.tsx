@@ -41,12 +41,12 @@ const Index = () => {
               KUID+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!
             </div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 text-balance leading-tight">
-              Conectando Famílias a{' '}
+              <span className="text-gradient-highlight">Conectando Famílias a</span>{' '}
               <span className="text-gradient-highlight">Acompanhantes Hospitalares</span>,{' '}
               <span className="text-gradient-highlight">Cuidadores</span>,{' '}
               <span className="text-gradient-highlight">Técnicos de Enfermagem</span> e{' '}
               <span className="text-gradient-highlight">Enfermeiros</span>{' '}
-              verificados e de Excelência
+              <span className="text-gradient-highlight">verificados e de Excelência</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 text-balance">
               A plataforma que facilita o encontro entre famílias e profissionais 
