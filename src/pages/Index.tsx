@@ -16,6 +16,8 @@ import {
   Play,
   MapPin,
   Eye,
+  Check,
+  Crown,
 } from 'lucide-react';
 
 const Index = () => {
@@ -308,6 +310,106 @@ const Index = () => {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-16 bg-background">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-4">
+              <Crown className="w-4 h-4" />
+              PLANOS PARA PROFISSIONAIS
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Destaque seu perfil e <span className="text-gradient-highlight">conquiste mais clientes</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Todos os profissionais começam com 30 dias de acesso completo grátis. 
+              Após o período de trial, escolha o plano ideal para continuar em destaque.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Monthly Plan */}
+            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold mb-2">Plano Mensal</h3>
+                  <p className="text-muted-foreground text-sm">Flexibilidade total</p>
+                </div>
+                <div className="text-center mb-6">
+                  <span className="text-4xl font-bold text-gradient-highlight">R$ 59,90</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Perfil em destaque nas buscas',
+                    'Selo de verificação',
+                    'Vídeo de apresentação',
+                    'Referências profissionais',
+                    'Estatísticas de visualização',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => navigate('/cadastro?plano=mensal')}
+                >
+                  Começar 30 dias grátis
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Annual Plan */}
+            <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
+              <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
+                MAIS ECONOMIA
+              </div>
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold mb-2">Plano Anual</h3>
+                  <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
+                </div>
+                <div className="text-center mb-6">
+                  <span className="text-4xl font-bold text-gradient-highlight">R$ 89,90</span>
+                  <span className="text-muted-foreground">/ano</span>
+                  <p className="text-sm text-primary font-medium mt-1">Economia de R$ 628,90</p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Tudo do plano mensal',
+                    'Perfil em destaque nas buscas',
+                    'Selo de verificação',
+                    'Vídeo de apresentação',
+                    'Referências profissionais',
+                    'Prioridade máxima no ranking',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => navigate('/cadastro?plano=anual')}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Começar 30 dias grátis
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="text-center text-muted-foreground text-sm mt-8">
+            ✨ Todos os planos incluem 30 dias de trial grátis. Após o período, assine para continuar com acesso completo.
+          </p>
         </div>
       </section>
 
