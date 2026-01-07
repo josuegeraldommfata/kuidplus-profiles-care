@@ -152,6 +152,12 @@ export default function Cadastro() {
                             <SelectItem value="Técnico(a) de Enfermagem">
                               Técnico(a) de Enfermagem
                             </SelectItem>
+                            <SelectItem value="Cuidador(a)">
+                              Cuidador(a)
+                            </SelectItem>
+                            <SelectItem value="Acompanhante Hospitalar">
+                              Acompanhante Hospitalar
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
