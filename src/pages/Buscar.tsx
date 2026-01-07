@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
+import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
 import { mockProfessionals, brazilianStates, priceRanges, professionOptions, getDisplayName, calculateAge } from '@/data/mockData';
 import {
   Search,
@@ -141,10 +142,10 @@ export default function Buscar() {
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Cidade</label>
-        <Input
-          placeholder="Digite a cidade"
+        <CityAutocomplete
           value={filters.city}
-          onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
+          onChange={(value) => setFilters((f) => ({ ...f, city: value }))}
+          placeholder="Digite a cidade"
         />
       </div>
 
