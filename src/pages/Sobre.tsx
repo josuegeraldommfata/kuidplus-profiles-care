@@ -11,11 +11,10 @@ export default function Sobre() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center animate-fade-in">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                Sobre o <span className="text-primary">KUID+</span>
+                Sobre o <span className="text-primary">KUIDD+</span>
               </h1>
               <p className="text-lg text-muted-foreground text-balance">
-                Conectamos famílias a profissionais de saúde qualificados,
-                facilitando o cuidado com quem você ama.
+                KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
               </p>
             </div>
           </div>
@@ -28,7 +27,7 @@ export default function Sobre() {
               <div className="animate-fade-in">
                 <h2 className="text-3xl font-bold mb-6">Nossa Missão</h2>
                 <p className="text-muted-foreground mb-4">
-                  O KUID+ nasceu da necessidade de tornar mais fácil e seguro
+                  O KUIDD+ nasceu da necessidade de tornar mais fácil e seguro
                   encontrar profissionais de saúde para cuidados domiciliares e
                   acompanhamento hospitalar.
                 </p>
@@ -137,7 +136,7 @@ export default function Sobre() {
               <CardContent className="p-8 text-center">
                 <h2 className="text-2xl font-bold mb-4">Aviso Importante</h2>
                 <p className="text-muted-foreground mb-4">
-                  O KUID+ é uma plataforma de exibição de perfis profissionais.
+                  O KUIDD+ é uma plataforma de exibição de perfis profissionais.
                 </p>
                 <p className="text-muted-foreground font-medium">
                   <strong>Não intermediamos serviços</strong>, não realizamos

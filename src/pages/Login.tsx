@@ -68,7 +68,7 @@ export default function Login() {
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4">
               <span className="text-lg font-bold text-primary-foreground">K+</span>
             </div>
-            <CardTitle className="text-2xl">Entrar no KUID+</CardTitle>
+            <CardTitle className="text-2xl">Entrar no KUIDD+</CardTitle>
             <CardDescription>
               Acesse sua conta para continuar
             </CardDescription>

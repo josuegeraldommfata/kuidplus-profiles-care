@@ -52,7 +52,7 @@ export const mockUsers: User[] = [
     id: '6',
     email: 'admin@kuid.com',
     password: '123456',
-    name: 'Admin KUID+',
+    name: 'Admin KUIDD+',
     role: 'admin',
   },
 ];
