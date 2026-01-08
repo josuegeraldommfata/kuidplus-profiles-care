@@ -10,7 +10,7 @@ export default function Privacidade() {
           <section>
             <h2 className="text-xl font-semibold mb-4">1. Introdução</h2>
             <p className="text-muted-foreground">
-              Esta Política de Privacidade descreve como o KUID+ coleta, usa e
+              Esta Política de Privacidade descreve como o KUIDD+ coleta, usa e
               protege as informações pessoais dos usuários. Ao utilizar nossa
               plataforma, você concorda com as práticas descritas neste documento.
             </p>
@@ -127,7 +127,7 @@ export default function Privacidade() {
             <p className="text-muted-foreground">
               Para exercer seus direitos ou esclarecer dúvidas sobre esta
               política, entre em contato conosco através do email:
-              privacidade@kuidplus.com.br
+              Contato@kuiddmais.com.br
             </p>
           </section>
 

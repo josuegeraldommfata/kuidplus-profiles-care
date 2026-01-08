@@ -12,8 +12,8 @@ export default function TermosProfissionais() {
           <section>
             <h2 className="text-xl font-semibold mb-4">1. Sobre a Plataforma</h2>
             <p className="text-muted-foreground">
-              O KUID+ é uma plataforma de exibição de perfis profissionais de
-              saúde. Ao se cadastrar, você concorda que o KUID+ funciona
+              O KUIDD+ é uma plataforma de exibição de perfis profissionais de
+              saúde. Ao se cadastrar, você concorda que o KUIDD+ funciona
               exclusivamente como um espaço para divulgação do seu perfil,
               facilitando o contato direto entre você e potenciais contratantes.
             </p>
@@ -21,7 +21,7 @@ export default function TermosProfissionais() {
 
           <section>
             <h2 className="text-xl font-semibold mb-4">
-              2. O que o KUID+ NÃO faz
+              2. O que o KUIDD+ NÃO faz
             </h2>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
               <li>Não intermedia a contratação de serviços</li>
@@ -56,7 +56,7 @@ export default function TermosProfissionais() {
           <section>
             <h2 className="text-xl font-semibold mb-4">4. Cadastro e Perfil</h2>
             <p className="text-muted-foreground mb-4">
-              Ao criar um perfil no KUID+, você autoriza a exibição pública das
+              Ao criar um perfil no KUIDD+, você autoriza a exibição pública das
               informações fornecidas, incluindo:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
@@ -73,10 +73,10 @@ export default function TermosProfissionais() {
               5. Verificação de Antecedentes
             </h2>
             <p className="text-muted-foreground">
-              O KUID+ pode solicitar documentação para verificação de antecedentes
+              O KUIDD+ pode solicitar documentação para verificação de antecedentes
               criminais. Esta verificação é um diferencial de segurança, mas não
               constitui garantia de conduta. A verificação é feita por parceiros
-              terceirizados e o KUID+ não se responsabiliza por eventuais falhas
+              terceirizados e o KUIDD+ não se responsabiliza por eventuais falhas
               no processo.
             </p>
           </section>
@@ -84,7 +84,7 @@ export default function TermosProfissionais() {
           <section>
             <h2 className="text-xl font-semibold mb-4">6. Planos e Pagamentos</h2>
             <p className="text-muted-foreground">
-              O KUID+ oferece planos de assinatura para profissionais. Os valores
+              O KUIDD+ oferece planos de assinatura para profissionais. Os valores
               e benefícios de cada plano estão disponíveis na plataforma. O
               pagamento da assinatura não garante contratação de serviços por
               parte dos contratantes.
@@ -96,7 +96,7 @@ export default function TermosProfissionais() {
               7. Suspensão e Exclusão
             </h2>
             <p className="text-muted-foreground">
-              O KUID+ reserva o direito de suspender ou excluir perfis que
+              O KUIDD+ reserva o direito de suspender ou excluir perfis que
               violem estes termos, apresentem informações falsas, ou recebam
               denúncias de má conduta.
             </p>
@@ -107,7 +107,7 @@ export default function TermosProfissionais() {
             <p className="text-muted-foreground">
               Os contratantes podem avaliar os profissionais com notas de 1 a 5
               estrelas. As avaliações são públicas e refletem a opinião dos
-              contratantes. O KUID+ não interfere nas avaliações, mas pode
+              contratantes. O KUIDD+ não interfere nas avaliações, mas pode
               remover avaliações que violem nossas diretrizes.
             </p>
           </section>

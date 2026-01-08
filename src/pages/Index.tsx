@@ -40,7 +40,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
-              KUID+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!
+              KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
             </div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-balance leading-tight text-gradient-highlight">
               Conectando Famílias a Acompanhantes Hospitalares, Cuidadores, Técnicos de Enfermagem e Enfermeiros verificados e de Excelência
@@ -78,7 +78,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                <span className="text-gradient-highlight">Conheça o KUID+</span>
+                <span className="text-gradient-highlight">Conheça o KUIDD+</span>
               </h2>
               <p className="text-muted-foreground">
                 Veja como funciona nossa plataforma e os benefícios para profissionais e famílias
@@ -89,8 +89,8 @@ const Index = () => {
                 <div className="w-20 h-20 rounded-full gradient-highlight flex items-center justify-center mx-auto mb-4">
                   <Play className="w-8 h-8 text-white ml-1" />
                 </div>
-                <p className="text-muted-foreground">
-                  Vídeo de apresentação da KUID+ (em breve)
+              <p className="text-muted-foreground">
+                  Vídeo de apresentação da KUIDD+ (em breve)
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ const Index = () => {
       <section className="py-16 bg-muted/30">
         <div className="container">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            Por que escolher o <span className="text-gradient-highlight">KUID+</span>?
+            Por que escolher o <span className="text-gradient-highlight">KUIDD+</span>?
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
