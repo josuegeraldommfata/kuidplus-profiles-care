@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { Pool } = require('pg');
+const pool = require('./db');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const professionalRoutes = require('./routes/professionals');
@@ -16,25 +16,6 @@ const port = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Database connection
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'Kuid',
-  password: process.env.DB_PASSWORD || '320809eu',
-  port: process.env.DB_PORT || 5432,
-});
-
-// Test database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('Error acquiring client', err.stack);
-  } else {
-    console.log('Database connected successfully');
-    release();
-  }
-});
 
 // Routes
 app.use('/api/auth', authRoutes);

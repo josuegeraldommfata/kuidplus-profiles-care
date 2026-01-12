@@ -139,6 +139,48 @@
   }
 }
 
+/* Responsive / fluid typography and utilities */
+html {
+  /* Base font scales between 15px and 18px depending on viewport width */
+  font-size: clamp(15px, 1.2vw + 12px, 18px);
+}
+
+h1 {
+  font-size: clamp(1.6rem, 4.4vw, 3.6rem);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 3.2vw, 2.4rem);
+}
+
+p, li, a, button {
+  font-size: clamp(0.95rem, 0.9vw + 0.3rem, 1.05rem);
+}
+
+/* Make images and svg scale nicely */
+img, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ensure header nav wraps gracefully on very small screens */
+header .container {
+  width: 100%;
+}
+
+/* Reduce horizontal padding on very small devices */
+@media (max-width: 420px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  nav a {
+    font-size: 0.85rem;
+  }
+}
+
 @layer utilities {
   .gradient-primary {
     background: var(--gradient-primary);

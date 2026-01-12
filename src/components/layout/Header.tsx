@@ -40,12 +40,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
-            <span className="text-lg font-bold text-primary-foreground">K+</span>
-          </div>
-          <span className="text-xl font-bold text-foreground">KUIDD+</span>
+      <div className="container flex h-16 md:h-24 items-center justify-between">
+        <Link to="/" className="flex items-center gap-4">
+          <img
+            src="/logo.png"
+            alt="KUIDD+"
+            className="h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -62,6 +63,20 @@ export function Header() {
           >
             Sobre
           </Link>
+          <Link
+            to="/planos"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Planos
+          </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/mercadopago-keys"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Chaves MP
+            </Link>
+          )}
           <Link
             to="/termos-profissionais"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -171,6 +186,22 @@ export function Header() {
             >
               Para Profissionais
             </Link>
+            <Link
+              to="/planos"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground p-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Planos
+            </Link>
+            {user?.role === 'admin' && (
+              <Link
+                to="/mercadopago-keys"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground p-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Chaves MP
+              </Link>
+            )}
           </nav>
           <div className="border-t border-border pt-4">
             {isAuthenticated ? (
