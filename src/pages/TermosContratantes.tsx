@@ -12,8 +12,8 @@ export default function TermosContratantes() {
           <section>
             <h2 className="text-xl font-semibold mb-4">1. Sobre a Plataforma</h2>
             <p className="text-muted-foreground">
-              O KUID+ é uma plataforma de exibição de perfis de profissionais de
-              saúde. Ao utilizar a plataforma, você concorda que o KUID+ serve
+              O KUIDD+ é uma plataforma de exibição de perfis de profissionais de
+              saúde. Ao utilizar a plataforma, você concorda que o KUIDD+ serve
               exclusivamente para facilitar o contato entre contratantes e
               profissionais.
             </p>
@@ -21,7 +21,7 @@ export default function TermosContratantes() {
 
           <section>
             <h2 className="text-xl font-semibold mb-4">
-              2. O que o KUID+ NÃO faz
+              2. O que o KUIDD+ NÃO faz
             </h2>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2">
               <li>
@@ -39,7 +39,7 @@ export default function TermosContratantes() {
               </li>
               <li>
                 <strong>Não estabelece vínculo empregatício</strong> — Não existe
-                qualquer vínculo trabalhista com o KUID+
+                qualquer vínculo trabalhista com o KUIDD+
               </li>
             </ul>
           </section>
@@ -49,7 +49,7 @@ export default function TermosContratantes() {
               3. Uso da Plataforma
             </h2>
             <p className="text-muted-foreground mb-4">
-              Para buscar profissionais no KUID+, você não precisa criar conta.
+              Para buscar profissionais no KUIDD+, você não precisa criar conta.
               Basta utilizar os filtros de busca e entrar em contato diretamente
               via WhatsApp.
             </p>
@@ -69,7 +69,7 @@ export default function TermosContratantes() {
               4. Aviso sobre Verificação
             </h2>
             <p className="text-muted-foreground">
-              Embora o KUID+ possa indicar que um profissional possui
+              Embora o KUIDD+ possa indicar que um profissional possui
               "antecedentes verificados", esta verificação é informativa e não
               constitui garantia de conduta. A decisão de contratar e a
               verificação adicional de credenciais são de sua responsabilidade.
@@ -80,7 +80,7 @@ export default function TermosContratantes() {
             <h2 className="text-xl font-semibold mb-4">5. Avaliações</h2>
             <p className="text-muted-foreground">
               Após utilizar os serviços de um profissional encontrado através do
-              KUID+, você poderá avaliá-lo com uma nota de 1 a 5 estrelas. As
+              KUIDD+, você poderá avaliá-lo com uma nota de 1 a 5 estrelas. As
               avaliações ajudam outros contratantes e devem refletir sua
               experiência real.
             </p>
@@ -91,7 +91,7 @@ export default function TermosContratantes() {
               6. Limitação de Responsabilidade
             </h2>
             <p className="text-muted-foreground">
-              O KUID+ não se responsabiliza por:
+              O KUIDD+ não se responsabiliza por:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-2">
               <li>Qualidade dos serviços prestados pelos profissionais</li>

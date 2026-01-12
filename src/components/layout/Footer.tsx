@@ -11,10 +11,10 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
                 <span className="text-sm font-bold text-primary-foreground">K+</span>
               </div>
-              <span className="text-lg font-bold">KUID+</span>
+              <span className="text-lg font-bold">KUIDD+</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Conectando famílias a cuidadores de saúde qualificados.
+              KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
             </p>
           </div>
 
@@ -40,18 +40,18 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Jurídico */}
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4">Jurídico</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/termos-profissionais" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Termos para Profissionais
+                <Link to="/termos-contratantes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Termo de uso para familiares
                 </Link>
               </li>
               <li>
-                <Link to="/termos-contratantes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Termos para Contratantes
+                <Link to="/termos-profissionais" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Termo de uso para profissionais
                 </Link>
               </li>
               <li>
@@ -62,15 +62,12 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contato */}
           <div>
             <h4 className="font-semibold mb-4">Contato</h4>
             <ul className="space-y-2">
               <li className="text-sm text-muted-foreground">
-                contato@kuidplus.com.br
-              </li>
-              <li className="text-sm text-muted-foreground">
-                São Paulo, Brasil
+                Contato@kuiddmais.com.br
               </li>
             </ul>
           </div>
@@ -78,7 +75,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border">
           <p className="text-sm text-muted-foreground text-center">
-            © {new Date().getFullYear()} KUID+. Todos os direitos reservados.
+            © {new Date().getFullYear()} KUIDD+. Todos os direitos reservados.
           </p>
         </div>
       </div>
