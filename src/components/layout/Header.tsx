@@ -40,12 +40,12 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 md:h-24 items-center justify-between">
+      <div className="container flex h-16 md:h-28 lg:h-32 items-center justify-between">
         <Link to="/" className="flex items-center gap-4">
           <img
             src="/logo.png"
             alt="KUIDD+"
-            className="h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+            className="h-16 md:h-24 lg:h-28 xl:h-32 w-auto object-contain"
           />
         </Link>
 

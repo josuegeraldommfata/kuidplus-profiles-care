@@ -7,12 +7,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
-                <span className="text-sm font-bold text-primary-foreground">K+</span>
+              <div className="flex items-center gap-4">
+                <img src="/logo.png" alt="KUIDD+" className="h-16 md:h-24 lg:h-28 xl:h-32 w-auto object-contain" />
+                <span className="text-lg font-bold"></span>
               </div>
-              <span className="text-lg font-bold">KUIDD+</span>
-            </div>
             <p className="text-sm text-muted-foreground">
               KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
             </p>

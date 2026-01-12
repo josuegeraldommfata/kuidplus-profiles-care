@@ -19,18 +19,21 @@ import {
   Check,
   Crown,
 } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 const Index = () => {
   const navigate = useNavigate();
-  
+
   // Get highlighted professionals first, then others
   const highlightedProfessionals = mockProfessionals
     .filter((p) => p.status === 'approved' && p.isHighlighted)
     .slice(0, 5);
-  
+
   const featuredProfessionals = mockProfessionals
     .filter((p) => p.status === 'approved')
     .slice(0, 5);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   return (
     <Layout>
@@ -46,7 +49,7 @@ const Index = () => {
               Conectando Famílias a Acompanhantes Hospitalares, Cuidadores, Técnicos de Enfermagem e Enfermeiros verificados e de Excelência
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 text-balance">
-              A plataforma que facilita o encontro entre famílias e profissionais 
+              A plataforma que facilita o encontro entre famílias e profissionais
               qualificadas de cuidados. Segurança, transparência e qualidade em cada conexão.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -84,15 +87,20 @@ const Index = () => {
                 Veja como funciona nossa plataforma e os benefícios para profissionais e famílias
               </p>
             </div>
-            <div className="aspect-video rounded-2xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center">
-              <div className="text-center p-8">
-                <div className="w-20 h-20 rounded-full gradient-highlight flex items-center justify-center mx-auto mb-4">
-                  <Play className="w-8 h-8 text-white ml-1" />
-                </div>
-              <p className="text-muted-foreground">
-                  Vídeo de apresentação da KUIDD+ (em breve)
-                </p>
-              </div>
+            <div className="aspect-video rounded-2xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center relative">
+              {/* video with poster and overlay if browser can't render video frames */}
+              <video
+                ref={videoRef}
+                className="w-full h-full object-contain bg-black"
+                controls
+                playsInline
+                autoPlay
+                muted
+                preload="metadata"
+                src="/video/kuidd-plus-web.mp4"
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
@@ -325,11 +333,11 @@ const Index = () => {
               Destaque seu perfil e <span className="text-gradient-highlight">conquiste mais clientes</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Todos os profissionais começam com 30 dias de acesso completo grátis. 
+              Todos os profissionais começam com 30 dias de acesso completo grátis.
               Após o período de trial, escolha o plano ideal para continuar em destaque.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Monthly Plan */}
             <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
@@ -357,7 +365,7 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button 
+                <Button
                   className="w-full gradient-highlight border-0"
                   onClick={() => navigate('/cadastro?plano=mensal')}
                 >
@@ -396,7 +404,7 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button 
+                <Button
                   className="w-full gradient-highlight border-0"
                   onClick={() => navigate('/cadastro?plano=anual')}
                 >
