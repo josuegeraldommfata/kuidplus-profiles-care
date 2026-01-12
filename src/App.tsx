@@ -16,6 +16,8 @@ import TermosProfissionais from "./pages/TermosProfissionais";
 import TermosContratantes from "./pages/TermosContratantes";
 import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
+import Planos from "./pages/Planos";
+import MercadoPagoKeys from "./pages/MercadoPagoKeys";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/profissional" element={<DashboardProfissional />} />
             <Route path="/admin" element={<DashboardAdmin />} />
             <Route path="/sobre" element={<Sobre />} />
+            <Route path="/planos" element={<Planos />} />
+            <Route path="/mercadopago-keys" element={<MercadoPagoKeys />} />
             <Route path="/termos-profissionais" element={<TermosProfissionais />} />
             <Route path="/termos-contratantes" element={<TermosContratantes />} />
             <Route path="/privacidade" element={<Privacidade />} />
