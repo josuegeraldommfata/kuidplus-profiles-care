@@ -129,6 +129,11 @@ export default function PerfilProfissional() {
                             {professional.highlightPhrase}
                           </p>
                         )}
+                        {professional.corem && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            <strong>Registro profissional:</strong> {professional.corem}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col gap-2 items-end">
                         {professional.backgroundCheck && professional.isHighlighted && (
@@ -350,6 +355,18 @@ export default function PerfilProfissional() {
                       <span className="text-sm">Verificação pendente</span>
                     </div>
                   )}
+                  {professional.backgroundCheckFile || professional.background_check_file ? (
+                    <div className="mt-3">
+                      <a
+                        href={professional.backgroundCheckFile || professional.background_check_file}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline text-sm"
+                      >
+                        Ver documento de antecedentes (PDF)
+                      </a>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 

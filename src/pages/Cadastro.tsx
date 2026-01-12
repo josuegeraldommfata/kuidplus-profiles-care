@@ -23,13 +23,28 @@ import { useToast } from '@/hooks/use-toast';
 import { brazilianStates } from '@/data/mockData';
 import { UserPlus, ArrowLeft, ArrowRight } from 'lucide-react';
 
+type ProfessionalForm = {
+  name: string;
+  birthDate: string;
+  sex: string;
+  city: string;
+  state: string;
+  whatsapp: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  profession: string;
+  corem?: string;
+  backgroundCheckNotes?: string;
+};
+
 export default function Cadastro() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProfessionalForm>({
     name: '',
-    age: '',
+    birthDate: '',
     sex: '',
     city: '',
     state: '',
@@ -38,10 +53,18 @@ export default function Cadastro() {
     password: '',
     confirmPassword: '',
     profession: '',
+    corem: '',
+    backgroundCheckNotes: '',
   });
+  const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) setBackgroundCheckFile(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,13 +79,29 @@ export default function Cadastro() {
       return;
     }
 
-    toast({
-      title: 'Cadastro enviado!',
-      description:
-        'Seu perfil foi criado e está pendente de aprovação. Você receberá um email quando for aprovado.',
+    // Build form data to send including file
+    const payload = new FormData();
+    Object.entries(formData).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) payload.append(k, String(v));
     });
+    if (backgroundCheckFile) payload.append('background_check_file', backgroundCheckFile);
 
-    navigate('/login');
+    try {
+      await fetch('/api/professionals', {
+        method: 'POST',
+        body: payload,
+      });
+
+      toast({
+        title: 'Cadastro enviado!',
+        description:
+          'Seu perfil foi criado e está pendente de aprovação. Você receberá um email quando for aprovado.',
+      });
+
+      navigate('/login');
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Falha ao enviar cadastro.' , variant: 'destructive'});
+    }
   };
 
   return (
@@ -106,13 +145,13 @@ export default function Cadastro() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="age">Idade *</Label>
+                        <Label htmlFor="birthDate">Data de nascimento *</Label>
                         <Input
-                          id="age"
-                          type="number"
-                          placeholder="Ex: 30"
-                          value={formData.age}
-                          onChange={(e) => handleChange('age', e.target.value)}
+                          id="birthDate"
+                          type="date"
+                          placeholder="DD/MM/AAAA"
+                          value={formData.birthDate}
+                          onChange={(e) => handleChange('birthDate', e.target.value)}
                           required
                         />
                       </div>
@@ -161,6 +200,38 @@ export default function Cadastro() {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="corem">COREN (se aplicável)</Label>
+                        <Input
+                          id="corem"
+                          placeholder="Ex: COREN-XX 123456"
+                          value={formData.corem || ''}
+                          onChange={(e) => handleChange('corem', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="backgroundCheckNotes">Observações sobre antecedentes</Label>
+                        <Textarea
+                          id="backgroundCheckNotes"
+                          placeholder="Descreva se possui antecedentes ou informações relevantes"
+                          value={formData.backgroundCheckNotes || ''}
+                          onChange={(e) => handleChange('backgroundCheckNotes', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="background_check_file">Upload - Antecedente criminal (PDF)</Label>
+                      <Input
+                        id="background_check_file"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                      />
+                      <p className="text-xs text-muted-foreground">O arquivo será disponibilizado aos contratantes após aprovação do perfil.</p>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">

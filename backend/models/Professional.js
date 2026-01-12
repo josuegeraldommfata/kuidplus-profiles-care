@@ -28,6 +28,9 @@ class Professional {
     this.totalRatings = data.total_ratings;
     this.status = data.status;
     this.backgroundCheck = data.background_check;
+  this.corem = data.corem;
+  this.backgroundCheckFile = data.background_check_file;
+  this.backgroundCheckNotes = data.background_check_notes;
     this.whatsappClicks = data.whatsapp_clicks;
     this.weeklyViews = data.weekly_views;
     this.createdAt = data.created_at;
@@ -43,6 +46,7 @@ class Professional {
       profession, profileImage, videoUrl, bio, experienceYears, courses,
       certificates, serviceArea, serviceRadius, hospitals, availability,
       priceRange, rating, totalRatings, status, backgroundCheck,
+      corem, backgroundCheckFile, backgroundCheckNotes,
       whatsappClicks, weeklyViews, isHighlighted, highlightPhrase,
       references, trialEndsAt
     } = professionalData;
@@ -66,7 +70,8 @@ class Professional {
       profession, profileImage, videoUrl, bio, experienceYears, JSON.stringify(courses),
       JSON.stringify(certificates), serviceArea, serviceRadius, JSON.stringify(hospitals),
       availability, JSON.stringify(priceRange), rating, totalRatings, status,
-      backgroundCheck, whatsappClicks, weeklyViews, isHighlighted, highlightPhrase,
+      backgroundCheck, corem, backgroundCheckFile, backgroundCheckNotes,
+      whatsappClicks, weeklyViews, isHighlighted, highlightPhrase,
       JSON.stringify(references), trialEndsAt
     ];
 

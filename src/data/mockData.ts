@@ -97,6 +97,9 @@ export interface Professional {
   references?: { name: string; phone?: string }[];
   // Trial period
   trialEndsAt?: string;
+  corem?: string;
+  backgroundCheckFile?: string; // url or path to PDF
+  backgroundCheckNotes?: string;
 }
 
 // Helper to calculate age from birthDate
@@ -158,6 +161,8 @@ export const mockProfessionals: Professional[] = [
     references: [
       { name: 'Dr. Carlos Medeiros', phone: '11999998888' },
     ],
+      corem: 'COREN-SP 123456',
+      backgroundCheckFile: '/uploads/sample_maria_antecedentes.pdf',
   },
   {
     id: 'prof-2',
@@ -193,6 +198,8 @@ export const mockProfessionals: Professional[] = [
     weeklyViews: 45,
     createdAt: '2024-02-20',
     isHighlighted: false,
+      corem: 'COREN-RJ 654321',
+      backgroundCheckFile: '/uploads/sample_joao_antecedentes.pdf',
   },
   {
     id: 'prof-3',

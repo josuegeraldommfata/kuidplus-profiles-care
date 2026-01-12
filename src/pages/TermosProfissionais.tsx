@@ -124,7 +124,7 @@ export default function TermosProfissionais() {
           </section>
 
           <p className="text-sm text-muted-foreground pt-8 border-t">
-            Última atualização: Janeiro de 2024
+            Última atualização: Janeiro de 2026
           </p>
         </div>
       </div>
