@@ -57,6 +57,7 @@ export default function Cadastro() {
     backgroundCheckNotes: '',
   });
   const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
+  const [certificateFiles, setCertificateFiles] = useState<File[] | null>(null);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -65,6 +66,11 @@ export default function Cadastro() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (file) setBackgroundCheckFile(file);
+  };
+
+  const handleCertificatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : null;
+    setCertificateFiles(files);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,6 +91,9 @@ export default function Cadastro() {
       if (v !== undefined && v !== null) payload.append(k, String(v));
     });
     if (backgroundCheckFile) payload.append('background_check_file', backgroundCheckFile);
+    if (certificateFiles && certificateFiles.length > 0) {
+      certificateFiles.forEach((f) => payload.append('certificates', f));
+    }
 
     try {
       await fetch('/api/professionals', {
@@ -234,6 +243,18 @@ export default function Cadastro() {
                       <p className="text-xs text-muted-foreground">O arquivo será disponibilizado aos contratantes após aprovação do perfil.</p>
                     </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="certificates">Upload - Certificados (PDF) — múltiplos</Label>
+                      <Input
+                        id="certificates"
+                        type="file"
+                        accept="application/pdf"
+                        multiple
+                        onChange={handleCertificatesChange}
+                      />
+                      <p className="text-xs text-muted-foreground">Adicione certificados em PDF (ex.: cursos, especializações). Máx. recomendado: 10 arquivos.</p>
+                    </div>
+
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="state">Estado *</Label>
@@ -265,13 +286,13 @@ export default function Cadastro() {
                       </div>
                     </div>
 
-                    <Button
+                      <Button
                       type="button"
                       className="w-full mt-4"
                       onClick={() => setStep(2)}
                       disabled={
                         !formData.name ||
-                        !formData.age ||
+                        !formData.birthDate ||
                         !formData.sex ||
                         !formData.profession ||
                         !formData.state ||

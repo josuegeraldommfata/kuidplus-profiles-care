@@ -44,11 +44,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create professional (supports file upload for background check PDF)
-router.post('/', upload.single('background_check_file'), async (req, res) => {
+// Create professional (supports file upload for background check PDF and multiple certificates)
+router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, { name: 'certificates', maxCount: 10 }]), async (req, res) => {
   try {
     const fields = req.body;
-    const file = req.file;
+    const files = req.files || {};
+    const file = files.background_check_file ? files.background_check_file[0] : null;
+    const certificateFiles = files.certificates || [];
 
     // Map incoming fields to DB columns
     const name = fields.name || fields.fullName || fields.username;
@@ -63,19 +65,20 @@ router.post('/', upload.single('background_check_file'), async (req, res) => {
     const user_id = fields.user_id || null;
     const corem = fields.corem || null;
     const background_check_notes = fields.backgroundCheckNotes || null;
-    const background_check_file = file ? `/uploads/${file.filename}` : null;
+  const background_check_file = file ? `/uploads/${file.filename}` : null;
+  const certificate_paths = certificateFiles.map(f => `/uploads/${f.filename}`);
 
     const query = `INSERT INTO professionals (
       user_id, name, birth_date, sex, city, state, whatsapp, email, profession,
-      bio, profile_image, video_url, background_check, corem, background_check_file, background_check_notes
+      bio, profile_image, video_url, background_check, corem, background_check_file, background_check_notes, certificates
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9,
-      $10, $11, $12, $13, $14, $15, $16
+      $10, $11, $12, $13, $14, $15, $16, $17
     ) RETURNING *`;
 
     const values = [
       user_id, name, birth_date, sex, city, state, whatsapp, email, profession,
-      bio, null, null, false, corem, background_check_file, background_check_notes
+      bio, null, null, false, corem, background_check_file, background_check_notes, JSON.stringify(certificate_paths)
     ];
 
     const result = await pool.query(query, values);
