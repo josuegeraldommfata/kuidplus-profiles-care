@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ type Plan = {
 
 const fetchPlans = async (): Promise<Plan[]> => {
   try {
-    const res = await axios.get('/api/payments/plans');
+    const res = await api.get('/api/payments/plans');
     // Ensure we always return an array
     return Array.isArray(res.data) ? res.data : [];
   } catch (error) {
@@ -38,7 +38,7 @@ export default function Planos() {
 
   const createPref = useMutation({
     mutationFn: async (vars: { userId: string; planId: number }) => {
-      const res = await axios.post('/api/mercadopago/create_preference', vars);
+      const res = await api.post('/api/mercadopago/create_preference', vars);
       return res.data;
     },
   });

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
 import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
-import axios from 'axios';
+import api from '@/lib/api';
 import { brazilianStates, priceRanges, professionOptions, getDisplayName, Professional } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -83,7 +83,7 @@ export default function Buscar() {
 
         // Highlighted: respect same filters but small limit
         const hlParams = { ...baseParams, highlighted: true, limit: 5 };
-        const hlRes = await axios.get('/api/professionals', { params: hlParams });
+        const hlRes = await api.get('/api/professionals', { params: hlParams });
         if (!cancelled) {
           const hlData = hlRes.data;
           const hlItemsRaw = Array.isArray(hlData)
@@ -101,7 +101,7 @@ export default function Buscar() {
 
         // Regular (server-side paged)
         const params = { ...baseParams, page: currentPage, limit: itemsPerPage, highlighted: false };
-        const res = await axios.get('/api/professionals', { params });
+        const res = await api.get('/api/professionals', { params });
         if (!cancelled) {
           const data = res.data;
           const itemsRaw = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : data?.items || data || [];
@@ -123,7 +123,7 @@ export default function Buscar() {
     let cancelledTypes = false;
     async function fetchTypes() {
       try {
-        const t = await axios.get('/api/professionals/types/list');
+        const t = await api.get('/api/professionals/types/list');
         if (!cancelledTypes && Array.isArray(t.data) && t.data.length > 0) setProfessionList(t.data as string[]);
       } catch (err) {
         console.warn('Could not load profession types, using fallback', err);

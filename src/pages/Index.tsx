@@ -20,7 +20,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,8 +34,8 @@ const Index = () => {
 
     async function fetchHomeLists() {
       try {
-        const hl = await axios.get('/api/professionals', { params: { highlighted: true, limit: 5 } });
-        const fe = await axios.get('/api/professionals', { params: { highlighted: false, limit: 5 } });
+        const hl = await api.get('/api/professionals', { params: { highlighted: true, limit: 5 } });
+        const fe = await api.get('/api/professionals', { params: { highlighted: false, limit: 5 } });
 
         const hlItems = Array.isArray(hl.data) ? hl.data : Array.isArray(hl.data?.items) ? hl.data.items : [];
         const feItems = Array.isArray(fe.data) ? fe.data : Array.isArray(fe.data?.items) ? fe.data.items : [];

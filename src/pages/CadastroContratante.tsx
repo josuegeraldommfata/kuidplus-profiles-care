@@ -21,7 +21,7 @@ import { Layout } from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { brazilianStates } from '@/data/mockData';
 import { Building2, ArrowLeft, UserPlus } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 type ContratanteForm = {
   nome: string;
@@ -69,7 +69,7 @@ export default function CadastroContratante() {
     }
 
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await api.post('/api/auth/register', {
         name: `${formData.nome} ${formData.sobrenome}`,
         email: formData.email,
         password: formData.password,
