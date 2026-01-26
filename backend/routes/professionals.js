@@ -56,9 +56,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Get professional by ID
-router.get('/:id', async (req, res) => {
-
 // Get professionals with optional pagination, search and highlighted filter
 router.get('/', async (req, res) => {
   try {
@@ -157,36 +154,75 @@ router.get('/types/list', async (req, res) => {
   }
 });
 
-// Get professional by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    // Check if id is numeric (professional id) or if it's 'me' (current user)
-    if (id === 'me') {
-      // For authenticated users, return their own profile
-      if (req.user) {
-        const result = await pool.query('SELECT * FROM professionals WHERE user_id = $1', [req.user.id]);
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Professional profile not found' });
-        return res.json(result.rows[0]);
-      } else {
-        return res.status(401).json({ error: 'Authentication required' });
-      }
-    }
-
-    const result = await pool.query('SELECT * FROM professionals WHERE id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Professional not found' });
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Get current user's professional profile
 router.get('/me/profile', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM professionals WHERE user_id = $1', [req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Professional profile not found' });
-    res.json(result.rows[0]);
+    
+    // Parse JSON fields
+    const profile = result.rows[0];
+    if (profile.certificates && typeof profile.certificates === 'string') {
+      try {
+        profile.certificates = JSON.parse(profile.certificates);
+      } catch (e) {
+        profile.certificates = [];
+      }
+    }
+    if (profile.hospitals && typeof profile.hospitals === 'string') {
+      try {
+        profile.hospitals = JSON.parse(profile.hospitals);
+      } catch (e) {
+        profile.hospitals = [];
+      }
+    }
+    if (profile.price_range && typeof profile.price_range === 'string') {
+      try {
+        profile.price_range = JSON.parse(profile.price_range);
+      } catch (e) {
+        profile.price_range = null;
+      }
+    }
+    
+    res.json(profile);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get professional by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('SELECT * FROM professionals WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Professional not found' });
+    
+    // Parse JSON fields
+    const profile = result.rows[0];
+    if (profile.certificates && typeof profile.certificates === 'string') {
+      try {
+        profile.certificates = JSON.parse(profile.certificates);
+      } catch (e) {
+        profile.certificates = [];
+      }
+    }
+    if (profile.hospitals && typeof profile.hospitals === 'string') {
+      try {
+        profile.hospitals = JSON.parse(profile.hospitals);
+      } catch (e) {
+        profile.hospitals = [];
+      }
+    }
+    if (profile.price_range && typeof profile.price_range === 'string') {
+      try {
+        profile.price_range = JSON.parse(profile.price_range);
+      } catch (e) {
+        profile.price_range = null;
+      }
+    }
+    
+    res.json(profile);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -256,15 +292,15 @@ router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, 
     const mailOptions = {
       from: process.env.SMTP_USER || 'noreply@kuiddplus.com',
       to: email,
-      subject: 'Confirme seu email - KUID+',
+      subject: 'Confirme seu email - KUIDD+',
       html: `
-        <h2>Bem-vindo ao KUID+!</h2>
+        <h2>Bem-vindo ao KUIDD+!</h2>
         <p>Olá ${name},</p>
-        <p>Obrigado por se cadastrar na plataforma KUID+. Para ativar sua conta, por favor confirme seu email clicando no link abaixo:</p>
+        <p>Obrigado por se cadastrar na plataforma KUIDD+. Para ativar sua conta, por favor confirme seu email clicando no link abaixo:</p>
         <a href="${confirmationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Confirmar Email</a>
         <p>Se o botão não funcionar, copie e cole este link no seu navegador:</p>
         <p>${confirmationUrl}</p>
-        <p>Atenciosamente,<br>Equipe KUID+</p>
+        <p>Atenciosamente,<br>Equipe KUIDD+</p>
       `,
     };
 
@@ -280,16 +316,61 @@ router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, 
   }
 });
 
-// Update professional
-router.put('/update', authenticateToken, async (req, res) => {
+// Update professional - with file upload support
+router.put('/update', authenticateToken, upload.fields([
+  { name: 'profilePhoto', maxCount: 1 },
+  { name: 'background_check_file', maxCount: 1 },
+  { name: 'certificates', maxCount: 10 }
+]), async (req, res) => {
   try {
     const userId = req.user.id;
     const updates = req.body;
+    const files = req.files || {};
 
     // Build dynamic update query
     const fields = [];
     const values = [];
     let paramIndex = 1;
+
+    // Handle file uploads
+    if (files.profilePhoto && files.profilePhoto[0]) {
+      fields.push(`profile_image = $${paramIndex}`);
+      values.push(`/uploads/${files.profilePhoto[0].filename}`);
+      paramIndex++;
+    }
+
+    if (files.background_check_file && files.background_check_file[0]) {
+      fields.push(`background_check_file = $${paramIndex}`);
+      values.push(`/uploads/${files.background_check_file[0].filename}`);
+      paramIndex++;
+    }
+
+    if (files.certificates && files.certificates.length > 0) {
+      // Get existing certificates
+      const currentQuery = await pool.query('SELECT certificates FROM professionals WHERE user_id = $1', [userId]);
+      let existingCerts = [];
+      if (currentQuery.rows[0]?.certificates) {
+        try {
+          existingCerts = typeof currentQuery.rows[0].certificates === 'string' 
+            ? JSON.parse(currentQuery.rows[0].certificates) 
+            : currentQuery.rows[0].certificates;
+        } catch (e) {
+          existingCerts = [];
+        }
+      }
+      
+      // Add new certificates
+      const newCerts = files.certificates.map(f => ({
+        name: f.originalname,
+        file: `/uploads/${f.filename}`
+      }));
+      
+      const allCerts = [...existingCerts, ...newCerts];
+      
+      fields.push(`certificates = $${paramIndex}`);
+      values.push(JSON.stringify(allCerts));
+      paramIndex++;
+    }
 
     // Map form fields to database columns
     const fieldMapping = {
@@ -306,6 +387,13 @@ router.put('/update', authenticateToken, async (req, res) => {
     const currentQuery = await pool.query('SELECT price_range FROM professionals WHERE user_id = $1', [userId]);
     const currentData = currentQuery.rows[0] || {};
     let currentPriceRange = currentData.price_range || {};
+    if (typeof currentPriceRange === 'string') {
+      try {
+        currentPriceRange = JSON.parse(currentPriceRange);
+      } catch (e) {
+        currentPriceRange = {};
+      }
+    }
 
     for (const [key, value] of Object.entries(updates)) {
       if (value !== undefined && value !== null && value !== '') {
@@ -313,7 +401,7 @@ router.put('/update', authenticateToken, async (req, res) => {
         if (dbField) {
           if (key === 'priceMin' || key === 'priceMax') {
             // Handle price range as JSON - only update if both values are provided
-            if (!fields.includes('price_range')) {
+            if (!fields.some(f => f.startsWith('price_range'))) {
               // Update only the provided values
               if (updates.priceMin !== undefined && updates.priceMin !== '') {
                 currentPriceRange.min = parseFloat(updates.priceMin);

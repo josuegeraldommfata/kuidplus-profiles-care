@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function MercadoPagoKeys() {
@@ -10,7 +10,7 @@ export default function MercadoPagoKeys() {
 
   const save = async () => {
     try {
-      const res = await axios.post('/api/mercadopago/save_keys', {
+      const res = await api.post('/api/mercadopago/save_keys', {
         userId: user?.id || null,
         provider: 'mercadopago',
         public_key: publicKey,

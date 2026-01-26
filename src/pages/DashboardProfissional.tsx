@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateAge } from '@/data/mockData';
 import { StarRating } from '@/components/ui/StarRating';
-import axios from 'axios';
+import api from '@/lib/api';
 import {
   User,
   FileEdit,
@@ -111,7 +111,7 @@ export default function DashboardProfissional() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get('/api/auth/me', { withCredentials: true });
+        const response = await api.get('/api/auth/me');
         setUserData(response.data.user);
       } catch (error) {
         console.error('Erro ao buscar usuário logado:', error);
@@ -138,7 +138,7 @@ export default function DashboardProfissional() {
 
       try {
         // Usar o endpoint correto que busca pelo user_id do usuário autenticado
-        const response = await axios.get('/api/professionals/me/profile', { withCredentials: true });
+        const response = await api.get('/api/professionals/me/profile');
         setMyProfile(response.data);
 
         // Inicializar formData com os dados do perfil
@@ -194,8 +194,7 @@ export default function DashboardProfissional() {
     }
 
     try {
-      const response = await axios.put('/api/professionals/update', payload, {
-        withCredentials: true,
+      const response = await api.put('/api/professionals/update', payload, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

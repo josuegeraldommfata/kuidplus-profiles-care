@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { User } from '@/data/mockData';
 
 interface AuthContextType {
@@ -20,15 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('kuid_token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Verify token and get user data
-      axios.get('/api/auth/me', { withCredentials: true })
+      api.get('/api/auth/me')
         .then(response => {
           setUser(response.data.user);
         })
         .catch(() => {
           localStorage.removeItem('kuid_token');
-          delete axios.defaults.headers.common['Authorization'];
         })
         .finally(() => setLoading(false));
     } else {
@@ -38,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
+      const response = await api.post('/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
 
       if (!token || !userData) {
@@ -46,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       localStorage.setItem('kuid_token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
 
       return {
@@ -73,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('kuid_token');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
