@@ -21,7 +21,8 @@ export function Header() {
   const getDashboardPath = () => {
     if (!user) return '/';
     switch (user.role) {
-      case 'profissional':
+      case 'cuidador':
+      case 'acompanhante':
       case 'enfermeiro':
       case 'tecnico':
         return '/profissional';
@@ -34,11 +35,13 @@ export function Header() {
     }
   };
 
+  const isProfessionalRole = (role: string) => {
+    return ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(role);
+  };
+
   const getProfilePath = () => {
     if (!user) return '/';
-    if (user.role === 'profissional' || user.role === 'enfermeiro' || user.role === 'tecnico') {
-      // Para profissionais, o perfil público é /profissional/:id onde id é o ID do profissional
-      // Por enquanto, vamos usar uma rota que busca pelo user_id
+    if (isProfessionalRole(user.role)) {
       return '/profissional/me';
     }
     return getDashboardPath();

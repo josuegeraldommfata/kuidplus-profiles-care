@@ -7,6 +7,7 @@ const userRoutes = require('./routes/users');
 const professionalRoutes = require('./routes/professionals');
 const paymentRoutes = require('./routes/payments');
 const mpRoutes = require('./routes/mercadopago');
+const messageRoutes = require('./routes/messages');
 
 dotenv.config();
 

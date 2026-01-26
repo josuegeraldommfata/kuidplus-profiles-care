@@ -54,6 +54,10 @@ export default function Planos() {
     p.name.toLowerCase().includes('trimestral') || p.duration_days === 90
   );
 
+  // Check if user is a professional
+  const isProfessional = user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(user.role);
+  const buttonText = user ? 'Assinar Agora' : 'Fazer Login para Assinar';
+
   const handlePlanClick = async (planType: 'mensal' | 'anual') => {
     if (!user) {
       // Redirect to login if not authenticated

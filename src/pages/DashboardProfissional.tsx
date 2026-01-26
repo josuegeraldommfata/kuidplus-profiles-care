@@ -597,19 +597,19 @@ export default function DashboardProfissional() {
                           <div className="grid grid-cols-1 gap-2">
                             {myProfile.certificates.map((cert, i) => (
                               <div key={i} className="flex items-center gap-2 p-2 border rounded-lg">
-                                <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
-                                  <span className="text-red-600 text-xs font-bold">PDF</span>
+                                <div className="w-8 h-8 bg-destructive/10 rounded flex items-center justify-center">
+                                  <span className="text-destructive text-xs font-bold">PDF</span>
                                 </div>
                                 <div className="flex-1">
                                   <p className="text-sm font-medium">
-                                    {typeof cert === 'string' ? cert.split('/').pop() : cert.name || 'Certificado'}
+                                    {cert.name || 'Certificado'}
                                   </p>
                                 </div>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
-                                    const url = typeof cert === 'string' ? cert : cert.file;
+                                    const url = cert.file;
                                     if (url) {
                                       window.open(url.startsWith('http') ? url : `https://kuiddmais.com.br${url}`, '_blank');
                                     }
