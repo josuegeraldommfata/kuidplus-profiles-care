@@ -14,7 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,42 +22,52 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const result = await login(email, password);
 
-    const result = login(email, password);
+      if (result.success) {
+        toast({
+          title: 'Bem-vindo!',
+          description: result.message,
+        });
 
-    if (result.success) {
-      toast({
-        title: 'Bem-vindo!',
-        description: result.message,
-      });
-
-      // Redirect based on role
-      const user = JSON.parse(localStorage.getItem('kuid_user') || '{}');
-      switch (user.role) {
-        case 'enfermeiro':
-        case 'tecnico':
-          navigate('/profissional');
-          break;
-        case 'contratante':
-          navigate('/buscar');
-          break;
-        case 'admin':
-          navigate('/admin');
-          break;
-        default:
-          navigate('/');
+        // Pequeno delay para garantir que o contexto foi atualizado
+        setTimeout(() => {
+          // Redirect based on role - pega do contexto atualizado ou da resposta
+          const userRole = user?.role || (result as any).user?.role;
+          switch (userRole) {
+            case 'enfermeiro':
+            case 'tecnico':
+            case 'profissional':
+              navigate('/profissional');
+              break;
+            case 'contratante':
+              navigate('/buscar');
+              break;
+            case 'admin':
+              navigate('/admin');
+              break;
+            default:
+              navigate('/');
+          }
+        }, 100);
+      } else {
+        toast({
+          title: 'Erro no login',
+          description: result.message || 'Erro ao fazer login. Verifique suas credenciais.',
+          variant: 'destructive',
+        });
       }
-    } else {
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: 'Erro no login',
-        description: result.message,
+        description: (error as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || (error as { message?: string }).message || 'Erro inesperado. Tente novamente.',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -65,8 +75,12 @@ export default function Login() {
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 gradient-hero">
         <Card className="w-full max-w-md animate-fade-in shadow-lg">
           <CardHeader className="text-center">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4">
-              <span className="text-lg font-bold text-primary-foreground">K+</span>
+            <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <img
+                src="/logo.png"
+                alt="KUIDD+ Logo"
+                className="w-12 h-12 object-contain"
+              />
             </div>
             <CardTitle className="text-2xl">Entrar no KUIDD+</CardTitle>
             <CardDescription>

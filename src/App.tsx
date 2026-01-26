@@ -7,6 +7,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import EscolhaTipoCadastro from "./pages/EscolhaTipoCadastro";
+import CadastroContratante from "./pages/CadastroContratante";
+import ConfirmEmail from "./pages/ConfirmEmail";
 import Buscar from "./pages/Buscar";
 import PerfilProfissional from "./pages/PerfilProfissional";
 import DashboardProfissional from "./pages/DashboardProfissional";
@@ -21,33 +24,38 @@ import MercadoPagoKeys from "./pages/MercadoPagoKeys";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/cadastro" element={<Cadastro />} />
-            <Route path="/buscar" element={<Buscar />} />
-            <Route path="/profissional/:id" element={<PerfilProfissional />} />
-            <Route path="/profissional" element={<DashboardProfissional />} />
-            <Route path="/admin" element={<DashboardAdmin />} />
-            <Route path="/sobre" element={<Sobre />} />
-            <Route path="/planos" element={<Planos />} />
-            <Route path="/mercadopago-keys" element={<MercadoPagoKeys />} />
-            <Route path="/termos-profissionais" element={<TermosProfissionais />} />
-            <Route path="/termos-contratantes" element={<TermosContratantes />} />
-            <Route path="/privacidade" element={<Privacidade />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/cadastro" element={<Cadastro />} />
+              <Route path="/escolha-tipo-cadastro" element={<EscolhaTipoCadastro />} />
+              <Route path="/cadastro-contratante" element={<CadastroContratante />} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
+              <Route path="/buscar" element={<Buscar />} />
+              <Route path="/profissional/:id" element={<PerfilProfissional />} />
+              <Route path="/profissional" element={<DashboardProfissional />} />
+              <Route path="/admin" element={<DashboardAdmin />} />
+              <Route path="/sobre" element={<Sobre />} />
+              <Route path="/planos" element={<Planos />} />
+              <Route path="/mercadopago-keys" element={<MercadoPagoKeys />} />
+              <Route path="/termos-profissionais" element={<TermosProfissionais />} />
+              <Route path="/termos-contratantes" element={<TermosContratantes />} />
+              <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

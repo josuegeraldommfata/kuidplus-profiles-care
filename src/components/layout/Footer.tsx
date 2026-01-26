@@ -11,9 +11,7 @@ export function Footer() {
                 <img src="/logo.png" alt="KUIDD+" className="h-16 md:h-24 lg:h-28 xl:h-32 w-auto object-contain" />
                 <span className="text-lg font-bold"></span>
               </div>
-            <p className="text-sm text-muted-foreground">
-              KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
-            </p>
+
           </div>
 
           {/* Links */}

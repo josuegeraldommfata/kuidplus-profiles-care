@@ -65,6 +65,11 @@ export default function PerfilProfissional() {
     }
   };
 
+  const handleChatClick = () => {
+    // Por enquanto, apenas abre WhatsApp como fallback
+    handleWhatsAppClick();
+  };
+
   const openWhatsApp = () => {
     localStorage.setItem('kuid_whatsapp_disclaimer', 'true');
     const message = encodeURIComponent(
@@ -187,19 +192,30 @@ export default function PerfilProfissional() {
                         Valor por 12 horas
                       </p>
                       <p className={`text-2xl font-bold ${professional.isHighlighted ? 'text-gradient-highlight' : 'text-primary'}`}>
-                        R$ {professional.priceRange.min} – R${' '}
-                        {professional.priceRange.max}
+                        R$ {professional?.priceRange?.min ?? '--'} – R${' '}
+                        {professional?.priceRange?.max ?? '--'}
                       </p>
                     </div>
 
-                    <Button
-                      size="lg"
-                      className={`w-full md:w-auto ${professional.isHighlighted ? 'gradient-highlight border-0' : ''}`}
-                      onClick={handleWhatsAppClick}
-                    >
-                      <MessageCircle className="mr-2 h-5 w-5" />
-                      Entrar em contato via WhatsApp
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="flex-1 md:flex-none"
+                        onClick={handleChatClick}
+                      >
+                        <MessageCircle className="mr-2 h-5 w-5" />
+                        Enviar Mensagem
+                      </Button>
+                      <Button
+                        size="lg"
+                        className={`flex-1 md:flex-none ${professional.isHighlighted ? 'gradient-highlight border-0' : ''}`}
+                        onClick={handleWhatsAppClick}
+                      >
+                        <MessageCircle className="mr-2 h-5 w-5" />
+                        WhatsApp
+                      </Button>
+                    </div>
                   </CardContent>
                 </div>
               </Card>
@@ -209,8 +225,8 @@ export default function PerfilProfissional() {
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold mb-4">Sobre</h2>
                   <p className="text-muted-foreground whitespace-pre-line">
-                    {professional.isHighlighted 
-                      ? professional.bio 
+                    {professional.isHighlighted
+                      ? professional.bio
                       : professional.bio.substring(0, 150) + (professional.bio.length > 150 ? '...' : '')
                     }
                   </p>

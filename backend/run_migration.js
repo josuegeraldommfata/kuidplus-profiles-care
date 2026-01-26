@@ -4,16 +4,18 @@ const pool = require('./db');
 
 async function run() {
   try {
-    const migrationPath = path.join(__dirname, 'migrations', '20260112_add_professional_fields.sql');
-    if (!fs.existsSync(migrationPath)) {
-      console.error('Migration file not found:', migrationPath);
-      process.exit(1);
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const files = fs.readdirSync(migrationsDir).filter(file => file.endsWith('.sql')).sort();
+
+    for (const file of files) {
+      const migrationPath = path.join(migrationsDir, file);
+      console.log(`Running migration: ${file}`);
+      const sql = fs.readFileSync(migrationPath, 'utf8');
+      await pool.query(sql);
+      console.log(`Migration ${file} executed successfully.`);
     }
 
-    const sql = fs.readFileSync(migrationPath, 'utf8');
-    console.log('Running migration...');
-    await pool.query(sql);
-    console.log('Migration executed successfully.');
+    console.log('All migrations executed successfully.');
     process.exit(0);
   } catch (err) {
     console.error('Migration error:', err);

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
 import { StarRating } from '@/components/ui/StarRating';
-import { mockProfessionals, getDisplayName, calculateAge } from '@/data/mockData';
+import { getDisplayName, Professional } from '@/data/mockData';
 import {
   Search,
   Shield,
@@ -19,19 +19,39 @@ import {
   Check,
   Crown,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Index = () => {
   const navigate = useNavigate();
 
-  // Get highlighted professionals first, then others
-  const highlightedProfessionals = mockProfessionals
-    .filter((p) => p.status === 'approved' && p.isHighlighted)
-    .slice(0, 5);
+  // Get highlighted professionals first, then others (from backend)
+  const [highlightedProfessionals, setHighlightedProfessionals] = useState<Professional[]>([]);
+  const [featuredProfessionals, setFeaturedProfessionals] = useState<Professional[]>([]);
 
-  const featuredProfessionals = mockProfessionals
-    .filter((p) => p.status === 'approved')
-    .slice(0, 5);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchHomeLists() {
+      try {
+        const hl = await axios.get('/api/professionals', { params: { highlighted: true, limit: 5 } });
+        const fe = await axios.get('/api/professionals', { params: { highlighted: false, limit: 5 } });
+
+        const hlItems = Array.isArray(hl.data) ? hl.data : Array.isArray(hl.data?.items) ? hl.data.items : [];
+        const feItems = Array.isArray(fe.data) ? fe.data : Array.isArray(fe.data?.items) ? fe.data.items : [];
+
+        if (!cancelled) {
+          setHighlightedProfessionals(hlItems as Professional[]);
+          setFeaturedProfessionals(feItems as Professional[]);
+        }
+      } catch (err) {
+        console.warn('Failed to load home professionals', err);
+      }
+    }
+
+    fetchHomeLists();
+    return () => { cancelled = true; };
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -91,7 +111,7 @@ const Index = () => {
               {/* video with poster and overlay if browser can't render video frames */}
               <video
                 ref={videoRef}
-                className="w-full h-full object-contain bg-black"
+                className="w-full h-full object-cover bg-black"
                 controls
                 playsInline
                 autoPlay
@@ -222,7 +242,7 @@ const Index = () => {
                         showCount={false}
                       />
                       <span className="text-xs font-medium">
-                        R$ {professional.priceRange.min}–{professional.priceRange.max}
+                        R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
                       </span>
                     </div>
                     {professional.highlightPhrase && (
@@ -311,7 +331,7 @@ const Index = () => {
                       showCount={false}
                     />
                     <span className="text-xs font-medium">
-                      R$ {professional.priceRange.min}–{professional.priceRange.max}
+                      R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
                     </span>
                   </div>
                 </CardContent>
@@ -333,7 +353,7 @@ const Index = () => {
               Destaque seu perfil e <span className="text-gradient-highlight">conquiste mais clientes</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Todos os profissionais começam com 30 dias de acesso completo grátis.
+              Todos os profissionais começam com 7 dias de acesso completo grátis.
               Após o período de trial, escolha o plano ideal para continuar em destaque.
             </p>
           </div>
@@ -347,7 +367,7 @@ const Index = () => {
                   <p className="text-muted-foreground text-sm">Flexibilidade total</p>
                 </div>
                 <div className="text-center mb-6">
-                  <span className="text-4xl font-bold text-gradient-highlight">R$ 59,90</span>
+                  <span className="text-4xl font-bold text-gradient-highlight">R$ 39,90</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
                 <ul className="space-y-3 mb-8">
@@ -369,7 +389,7 @@ const Index = () => {
                   className="w-full gradient-highlight border-0"
                   onClick={() => navigate('/cadastro?plano=mensal')}
                 >
-                  Começar 30 dias grátis
+                  Começar 7 dias grátis
                 </Button>
               </CardContent>
             </Card>
@@ -381,13 +401,13 @@ const Index = () => {
               </div>
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-2">Plano Anual</h3>
+                  <h3 className="text-xl font-bold mb-2">Plano Trimestral</h3>
                   <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
                 </div>
                 <div className="text-center mb-6">
-                  <span className="text-4xl font-bold text-gradient-highlight">R$ 89,90</span>
-                  <span className="text-muted-foreground">/ano</span>
-                  <p className="text-sm text-primary font-medium mt-1">Economia de R$ 628,90</p>
+                  <span className="text-4xl font-bold text-gradient-highlight">R$ 99,90</span>
+                  <span className="text-muted-foreground">/trimestre</span>
+                  <p className="text-sm text-primary font-medium mt-1">Economia de R$ 19,80</p>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
@@ -406,17 +426,17 @@ const Index = () => {
                 </ul>
                 <Button
                   className="w-full gradient-highlight border-0"
-                  onClick={() => navigate('/cadastro?plano=anual')}
+                  onClick={() => navigate('/cadastro?plano=trimestral')}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Começar 30 dias grátis
+                  Começar 7 dias grátis
                 </Button>
               </CardContent>
             </Card>
           </div>
 
           <p className="text-center text-muted-foreground text-sm mt-8">
-            ✨ Todos os planos incluem 30 dias de trial grátis. Após o período, assine para continuar com acesso completo.
+            ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, assine para continuar com acesso completo.
           </p>
         </div>
       </section>

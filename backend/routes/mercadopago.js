@@ -14,11 +14,11 @@ const pool = new Pool({
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 });
 
-// Configure mercadopago with global token if present
+// Newer mercadopago package exposes a constructor as the default export.
+// Instead of mercadopago.configure (not available in current package),
+// create an instance when we have an access token and call methods on it.
 if (!process.env.MP_ACCESS_TOKEN) {
   console.warn('MP_ACCESS_TOKEN not set; Mercado Pago endpoints will try user-saved keys.');
-} else {
-  mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN });
 }
 
 const { encrypt, decrypt } = require('../utils/crypto');
@@ -64,21 +64,27 @@ router.post('/create_preference', async (req, res) => {
       notification_url: process.env.MP_NOTIFICATION_URL || `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/mercadopago/webhook`
     };
 
-    // ensure mercadopago SDK configured: try global token, else try user's saved key
-    if (!process.env.MP_ACCESS_TOKEN) {
+    // ensure mercadopago SDK configured: use env token if present, else try user's saved key
+    let token = process.env.MP_ACCESS_TOKEN || null;
+    if (!token) {
       try {
         const keys = await pool.query('SELECT private_key FROM api_keys WHERE user_id = $1 AND provider = $2 ORDER BY id DESC LIMIT 1', [userId, 'mercadopago']);
         if (keys.rowCount > 0) {
           const enc = keys.rows[0].private_key;
-          const token = decrypt(enc);
-          if (token) mercadopago.configure({ access_token: token });
+          token = decrypt(enc);
         }
       } catch (e) {
         console.error('Error loading user API key for Mercado Pago:', e);
       }
     }
 
-    const mpRes = await mercadopago.preferences.create(preference);
+    if (!token) {
+      return res.status(500).json({ error: 'Mercado Pago access token not configured' });
+    }
+
+    // instantiate sdk client with token
+    const MP = new mercadopago.default({ access_token: token });
+    const mpRes = await MP.Preference.create(preference);
     // opcional: armazene provider_plan_id ou provider_subscription_id conforme seu fluxo
     // store provider_plan_id in plans? For now return data to frontend
     return res.json({ preference: mpRes, init_point: mpRes.body.init_point, sandbox_init_point: mpRes.body.sandbox_init_point });
@@ -103,28 +109,53 @@ router.post('/create_preference', async (req, res) => {
   });
 
 // Webhook endpoint (notification from Mercado Pago)
-router.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
+router.post('/webhook', async (req, res) => {
   // Mercado Pago sends notifications that should be verified. For simplicity, we'll log and attempt to update payments/subscriptions.
   try {
-    // If called with raw body, parse query params from req.query (MP may send POST with JSON)
-    const topic = req.query.type || req.query.topic || req.headers['x-topic'];
-    const resource = req.query['data.id'] || req.query['id'] || (req.body && req.body.id);
+    // Mercado Pago sends JSON body with notification data
+    const notification = req.body;
+    const topic = req.query.topic || notification.topic || req.headers['x-topic'];
+    const resource = req.query['data.id'] || req.query['id'] || (notification.data && notification.data.id);
 
-    console.log('MP webhook received', { topic, resource });
+    console.log('MP webhook received', { topic, resource, notification });
 
     // Try to fetch payment details when resource looks like a payment id
     try {
       if (resource) {
         // resource may be numeric id
-        let mpPayment;
-        try {
-          mpPayment = await mercadopago.payment.get(resource);
-        } catch (e) {
+        let mpPayment = null;
+
+        // try to use env token first
+        let webhookToken = process.env.MP_ACCESS_TOKEN || null;
+        if (!webhookToken) {
+          // fallback: try to find any saved key (non-ideal but better than skipping)
           try {
-            mpPayment = await mercadopago.payment.findById(resource);
-          } catch (e2) {
+            const keys = await pool.query('SELECT private_key FROM api_keys WHERE provider = $1 ORDER BY id DESC LIMIT 1', ['mercadopago']);
+            if (keys.rowCount > 0) webhookToken = decrypt(keys.rows[0].private_key);
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        if (webhookToken) {
+          try {
+            const MP = new mercadopago.default({ access_token: webhookToken });
+            // prefer Payment.get (some versions) or Payment.findById
+            try {
+              mpPayment = await MP.Payment.get(resource);
+            } catch (e) {
+              try {
+                mpPayment = await MP.Payment.findById(resource);
+              } catch (e2) {
+                mpPayment = null;
+              }
+            }
+          } catch (errInst) {
+            console.error('Error instantiating MercadoPago client for webhook:', errInst);
             mpPayment = null;
           }
+        } else {
+          console.warn('No Mercado Pago token available to fetch payment details from webhook');
         }
 
         const paymentBody = mpPayment && (mpPayment.body || mpPayment.response || mpPayment);

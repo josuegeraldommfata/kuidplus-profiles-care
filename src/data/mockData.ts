@@ -115,7 +115,8 @@ export function calculateAge(birthDate: string): number {
 }
 
 // Helper to get first name + last initial
-export function getDisplayName(fullName: string, isHighlighted: boolean): string {
+export function getDisplayName(fullName: string | undefined, isHighlighted: boolean): string {
+  if (!fullName || typeof fullName !== 'string') return 'Profissional';
   if (isHighlighted) return fullName;
   const parts = fullName.trim().split(' ');
   if (parts.length === 1) return parts[0];

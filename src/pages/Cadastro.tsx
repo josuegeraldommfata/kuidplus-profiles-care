@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,8 @@ import { Layout } from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { brazilianStates } from '@/data/mockData';
 import { UserPlus, ArrowLeft, ArrowRight } from 'lucide-react';
+import EscolhaTipoCadastro from './EscolhaTipoCadastro';
+import CadastroContratante from './CadastroContratante';
 
 type ProfessionalForm = {
   name: string;
@@ -40,7 +42,11 @@ type ProfessionalForm = {
 
 export default function Cadastro() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tipo = searchParams.get('tipo');
   const { toast } = useToast();
+
+  // Hooks must be called before any early returns
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ProfessionalForm>({
     name: '',
@@ -59,6 +65,18 @@ export default function Cadastro() {
   const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
   const [certificateFiles, setCertificateFiles] = useState<File[] | null>(null);
 
+  // If no tipo specified, show selection page
+  if (!tipo) {
+    return <EscolhaTipoCadastro />;
+  }
+
+  // If tipo is contratante, show contratante form
+  if (tipo === 'contratante') {
+    return <CadastroContratante />;
+  }
+
+  // Otherwise show professional form
+
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -73,7 +91,7 @@ export default function Cadastro() {
     setCertificateFiles(files);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -104,7 +122,7 @@ export default function Cadastro() {
       toast({
         title: 'Cadastro enviado!',
         description:
-          'Seu perfil foi criado e está pendente de aprovação. Você receberá um email quando for aprovado.',
+          'Seu perfil foi criado com sucesso! Faça login para acessar sua conta.',
       });
 
       navigate('/login');

@@ -1,38 +1,79 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, mockUsers } from '@/data/mockData';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import axios from 'axios';
+import { User } from '@/data/mockData';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => { success: boolean; message: string };
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('kuid_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (email: string, password: string) => {
-    const foundUser = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('kuid_user', JSON.stringify(foundUser));
-      return { success: true, message: 'Login realizado com sucesso!' };
+  // Check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('kuid_token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Verify token and get user data
+      axios.get('/api/auth/me', { withCredentials: true })
+        .then(response => {
+          setUser(response.data.user);
+        })
+        .catch(() => {
+          localStorage.removeItem('kuid_token');
+          delete axios.defaults.headers.common['Authorization'];
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
+  }, []);
 
-    return { success: false, message: 'Email ou senha incorretos.' };
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
+      const { token, user: userData } = response.data;
+
+      if (!token || !userData) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      localStorage.setItem('kuid_token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(userData);
+
+      return {
+        success: true,
+        message: 'Login realizado com sucesso!',
+        user: userData
+      };
+    } catch (error) {
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+
+      const errorMessage = error.response?.data?.error || error.message || 'Erro ao fazer login. Verifique suas credenciais.';
+
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('kuid_user');
+    localStorage.removeItem('kuid_token');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
@@ -42,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user,
+        loading,
       }}
     >
       {children}
@@ -51,7 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
+    // Em desenvolvimento, apenas logar o erro em vez de quebrar
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('useAuth called outside AuthProvider. Make sure AuthProvider wraps your app.');
+      // Retornar valores padrão para evitar crash durante hot reload
+      return {
+        user: null,
+        login: async () => ({ success: false, message: 'AuthProvider não encontrado' }),
+        logout: () => {},
+        isAuthenticated: false,
+        loading: false,
+      };
+    }
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

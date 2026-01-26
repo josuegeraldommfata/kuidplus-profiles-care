@@ -48,7 +48,7 @@ class Professional {
       priceRange, rating, totalRatings, status, backgroundCheck,
       corem, backgroundCheckFile, backgroundCheckNotes,
       whatsappClicks, weeklyViews, isHighlighted, highlightPhrase,
-      references, trialEndsAt
+      referenceData, trialEndsAt
     } = professionalData;
 
     const query = `
@@ -72,7 +72,7 @@ class Professional {
       availability, JSON.stringify(priceRange), rating, totalRatings, status,
       backgroundCheck, corem, backgroundCheckFile, backgroundCheckNotes,
       whatsappClicks, weeklyViews, isHighlighted, highlightPhrase,
-      JSON.stringify(references), trialEndsAt
+      JSON.stringify(referenceData), trialEndsAt
     ];
 
     try {
@@ -168,7 +168,7 @@ class Professional {
       certificates: JSON.parse(this.certificates || '[]'),
       hospitals: JSON.parse(this.hospitals || '[]'),
       priceRange: JSON.parse(this.priceRange || '{}'),
-      references: JSON.parse(this.references || '[]'),
+      referenceData: JSON.parse(this.referenceData || '[]'),
     };
   }
 }

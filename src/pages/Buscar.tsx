@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
 import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
-import { mockProfessionals, brazilianStates, priceRanges, professionOptions, getDisplayName, calculateAge } from '@/data/mockData';
+import axios from 'axios';
+import { brazilianStates, priceRanges, professionOptions, getDisplayName, Professional } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Search,
   Filter,
@@ -45,64 +47,94 @@ export default function Buscar() {
   });
   const [sortBy, setSortBy] = useState<'recent' | 'rating'>('recent');
 
-  const filteredProfessionals = useMemo(() => {
-    let result = mockProfessionals.filter((p) => p.status === 'approved');
+  // Server-side data
+  const [highlightedProfessionals, setHighlightedProfessionals] = useState<Professional[]>([]);
+  const [regularProfessionals, setRegularProfessionals] = useState<Professional[]>([]);
+  const [totalRegular, setTotalRegular] = useState<number>(0);
+  const [searchDebounced, setSearchDebounced] = useState<string>('');
+  const [professionList, setProfessionList] = useState<string[]>(professionOptions);
+  const [loading, setLoading] = useState<boolean>(false);
+  // Pagination state (only for regular professionals) - moved up to be available to effects
+  const authCtx = useAuth();
+  const currentUser = authCtx?.user;
+  const isAuthenticated = !!authCtx?.isAuthenticated;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  // debounce searchTerm into searchDebounced
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(searchTerm.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    // Search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(term) ||
-          p.city.toLowerCase().includes(term) ||
-          p.profession.toLowerCase().includes(term)
-      );
-    }
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // Build base params for both highlighted and regular requests
+        const baseParams: Record<string, string | number | boolean> = {};
+        if (searchDebounced) baseParams.q = searchDebounced;
+        if (filters.state) baseParams.state = filters.state;
+        if (filters.city) baseParams.city = filters.city;
+        if (filters.profession) baseParams.profession = filters.profession;
+        if (filters.sex) baseParams.sex = filters.sex;
+        if (filters.minRating) baseParams.minRating = filters.minRating;
+        if (sortBy) baseParams.sortBy = sortBy;
 
-    // Filters
-    if (filters.state) {
-      result = result.filter((p) => p.state === filters.state);
-    }
-    if (filters.city) {
-      result = result.filter((p) =>
-        p.city.toLowerCase().includes(filters.city.toLowerCase())
-      );
-    }
-    if (filters.profession) {
-      result = result.filter((p) => p.profession === filters.profession);
-    }
-    if (filters.sex) {
-      result = result.filter((p) => p.sex === filters.sex);
-    }
-    if (filters.priceRange) {
-      const range = priceRanges.find((r) => r.label === filters.priceRange);
-      if (range) {
-        result = result.filter(
-          (p) => p.priceRange.min >= range.min && p.priceRange.max <= range.max
-        );
+        // Highlighted: respect same filters but small limit
+        const hlParams = { ...baseParams, highlighted: true, limit: 5 };
+        const hlRes = await axios.get('/api/professionals', { params: hlParams });
+        if (!cancelled) {
+          const hlData = hlRes.data;
+          const hlItemsRaw = Array.isArray(hlData)
+            ? hlData
+            : Array.isArray(hlData?.items)
+            ? hlData.items
+            : hlData
+            ? hlData
+            : [];
+          const hlItems = Array.isArray(hlItemsRaw) ? hlItemsRaw : [hlItemsRaw].filter(Boolean);
+          // Filter out highlighted professionals with invalid names
+          const validHlItems = hlItems.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          setHighlightedProfessionals(validHlItems as Professional[]);
+        }
+
+        // Regular (server-side paged)
+        const params = { ...baseParams, page: currentPage, limit: itemsPerPage, highlighted: false };
+        const res = await axios.get('/api/professionals', { params });
+        if (!cancelled) {
+          const data = res.data;
+          const itemsRaw = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : data?.items || data || [];
+          const items = Array.isArray(itemsRaw) ? itemsRaw : [itemsRaw].filter(Boolean);
+          // Filter out professionals with invalid names
+          const validItems = items.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          const total = typeof data?.total === 'number' ? data.total : parseInt(data?.total || '0', 10) || (Array.isArray(validItems) ? validItems.length : 0);
+          setRegularProfessionals(validItems as Professional[]);
+          setTotalRegular(total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch professionals', err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
-    if (filters.minRating) {
-      const minRating = parseFloat(filters.minRating);
-      result = result.filter((p) => p.rating >= minRating);
+
+    // fetch profession types once (if empty or default)
+    let cancelledTypes = false;
+    async function fetchTypes() {
+      try {
+        const t = await axios.get('/api/professionals/types/list');
+        if (!cancelledTypes && Array.isArray(t.data) && t.data.length > 0) setProfessionList(t.data as string[]);
+      } catch (err) {
+        console.warn('Could not load profession types, using fallback', err);
+      }
     }
 
-    // Sort - highlighted first, then by selected criteria
-    result.sort((a, b) => {
-      // Highlighted always first
-      if (a.isHighlighted && !b.isHighlighted) return -1;
-      if (!a.isHighlighted && b.isHighlighted) return 1;
-      
-      // Then by selected sort
-      if (sortBy === 'recent') {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      } else {
-        return b.rating - a.rating;
-      }
-    });
+    fetchTypes();
+    fetchData();
+    return () => { cancelled = true; cancelledTypes = true; };
+  }, [searchDebounced, filters, sortBy, currentPage, itemsPerPage]);
 
-    return result;
-  }, [searchTerm, filters, sortBy]);
 
   const clearFilters = () => {
     setFilters({
@@ -162,7 +194,7 @@ export default function Buscar() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as categorias</SelectItem>
-            {professionOptions.map((prof) => (
+            {professionList.map((prof) => (
               <SelectItem key={prof} value={prof}>
                 {prof}
               </SelectItem>
@@ -239,9 +271,42 @@ export default function Buscar() {
     </div>
   );
 
-  // Separate highlighted and regular professionals
-  const highlightedProfessionals = filteredProfessionals.filter(p => p.isHighlighted);
-  const regularProfessionals = filteredProfessionals.filter(p => !p.isHighlighted);
+  useEffect(() => {
+    // reset to first page when filters/search/sort or itemsPerPage change
+    setCurrentPage(1);
+  }, [searchTerm, filters, sortBy, itemsPerPage, setCurrentPage]);
+
+  // totalRegular is provided by server (total count of non-highlighted results)
+  const totalPages = Math.max(1, Math.ceil(totalRegular / itemsPerPage));
+  // regularProfessionals is already paginated server-side
+  const paginatedRegular = Array.isArray(regularProfessionals) ? regularProfessionals : [];
+  const highlightedCount = Array.isArray(highlightedProfessionals) ? highlightedProfessionals.length : 0;
+  const totalFound = highlightedCount + totalRegular;
+
+  // Helper for page numbers window
+  function getPageNumbers(total: number, current: number, maxWindow = 5) {
+    const pages: number[] = [];
+    if (total <= maxWindow) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+    let start = Math.max(1, current - Math.floor(maxWindow / 2));
+    let end = start + maxWindow - 1;
+    if (end > total) {
+      end = total;
+      start = total - maxWindow + 1;
+    }
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  // compute page numbers safely (guard against unexpected values or HMR state)
+  let pageNumbers: number[] = [1];
+  try {
+    pageNumbers = getPageNumbers(totalPages, typeof currentPage === 'number' ? currentPage : 1);
+  } catch (e) {
+    pageNumbers = [1];
+  }
 
   return (
     <Layout>
@@ -319,13 +384,23 @@ export default function Buscar() {
 
             {/* Results */}
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-4">
-                {filteredProfessionals.length} profissional
-                {filteredProfessionals.length !== 1 ? 'is' : ''} encontrado
-                {filteredProfessionals.length !== 1 ? 's' : ''}
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-muted-foreground">
+                  {totalFound} profissional{totalFound !== 1 ? 's' : ''} encontrado{totalFound !== 1 ? 's' : ''}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {(() => {
+                    // compute displayed range for regular results (highlighted shown separately above)
+                    const regularCount = regularProfessionals.length;
+                    const start = totalRegular === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+                    const end = totalRegular === 0 ? highlightedProfessionals.length : start + regularCount - 1;
+                    if (totalFound === 0) return 'Mostrando 0 de 0';
+                    return `Mostrando ${start}–${end} de ${totalFound}`;
+                  })()}
+                </div>
+              </div>
 
-              {filteredProfessionals.length === 0 ? (
+              {totalFound === 0 ? (
                 <Card className="p-8 text-center">
                   <p className="text-muted-foreground">
                     Nenhum profissional encontrado com os filtros selecionados.
@@ -341,16 +416,16 @@ export default function Buscar() {
               ) : (
                 <div className="space-y-6">
                   {/* Highlighted Professionals Section */}
-                  {highlightedProfessionals.length > 0 && (
+                  {Array.isArray(highlightedProfessionals) && highlightedProfessionals.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-4">
                         <Sparkles className="w-5 h-5 text-gradient-highlight" />
                         <h3 className="font-semibold text-gradient-highlight">Profissionais em Destaque</h3>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {highlightedProfessionals.map((professional, index) => (
+                        {highlightedProfessionals.filter(professional => professional && professional.name).map((professional, index) => (
                           <Card
-                            key={professional.id}
+                            key={professional.id ?? `hl-${index}`}
                             className="overflow-hidden hover:shadow-highlight transition-all cursor-pointer group animate-fade-in card-highlighted"
                             style={{ animationDelay: `${index * 50}ms` }}
                             onClick={() => navigate(`/profissional/${professional.id}`)}
@@ -396,7 +471,7 @@ export default function Buscar() {
                                   showCount={false}
                                 />
                                 <span className="text-xs font-medium">
-                                  R$ {professional.priceRange.min}–{professional.priceRange.max}
+                                  R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
                                 </span>
                               </div>
                               {professional.highlightPhrase && (
@@ -416,15 +491,65 @@ export default function Buscar() {
                   )}
 
                   {/* Regular Professionals Section */}
-                  {regularProfessionals.length > 0 && (
-                    <div>
-                      {highlightedProfessionals.length > 0 && (
-                        <h3 className="font-semibold mb-4 text-muted-foreground">Outros Profissionais</h3>
-                      )}
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {regularProfessionals.map((professional, index) => (
+                      {Array.isArray(regularProfessionals) && regularProfessionals.length > 0 && (
+                        <div>
+                          {highlightedProfessionals.length > 0 && (
+                            <h3 className="font-semibold mb-4 text-muted-foreground">Outros Profissionais</h3>
+                          )}
+
+                          {/* Contratante-only: items-per-page selector and pagination controls */}
+                              {isAuthenticated && currentUser?.role === 'contratante' && (
+                            <div className="flex items-center justify-end gap-3 mb-4">
+                              <div className="text-sm text-muted-foreground mr-2">Mostrar por página:</div>
+                              <Select
+                                value={String(itemsPerPage)}
+                                onValueChange={(val) => setItemsPerPage(parseInt(val, 10))}
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="6">6</SelectItem>
+                                  <SelectItem value="12">12</SelectItem>
+                                  <SelectItem value="24">24</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              {/* Pagination controls: Prev, numbered pages, Next */}
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                  disabled={currentPage <= 1}
+                                >
+                                  ◀
+                                </Button>
+
+                                {pageNumbers.map((p) => (
+                                  <Button
+                                    key={p}
+                                    variant={p === currentPage ? 'default' : 'ghost'}
+                                    onClick={() => setCurrentPage(p)}
+                                  >
+                                    {p}
+                                  </Button>
+                                ))}
+
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                  disabled={currentPage >= totalPages}
+                                >
+                                  ▶
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {Array.isArray(paginatedRegular) && paginatedRegular.filter(professional => professional && professional.name).map((professional, index) => (
                           <Card
-                            key={professional.id}
+                            key={professional.id ?? `reg-${(currentPage-1)*itemsPerPage + index}`}
                             className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group animate-fade-in"
                             style={{ animationDelay: `${index * 50}ms` }}
                             onClick={() => navigate(`/profissional/${professional.id}`)}
@@ -455,7 +580,7 @@ export default function Buscar() {
                                   showCount={false}
                                 />
                                 <span className="text-xs font-medium">
-                                  R$ {professional.priceRange.min}–{professional.priceRange.max}
+                                  R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
                                 </span>
                               </div>
                               <p className="text-[10px] text-muted-foreground mt-2">

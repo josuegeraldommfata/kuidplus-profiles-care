@@ -4,11 +4,11 @@ const { Pool } = require('pg');
 // Carrega variáveis de ambiente de .env (se existir)
 dotenv.config();
 
-const DB_USER = process.env.DB_USER || 'postgres';
+const DB_USER = process.env.DB_USER || 'kuiduser';
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432;
-const DB_NAME = process.env.DB_NAME || 'Kuid';
-const DB_PASSWORD = process.env.DB_PASSWORD || '320809eu';
+const DB_NAME = process.env.DB_NAME || 'kuidplus';
+const DB_PASSWORD = process.env.DB_PASSWORD || '320809';
 
 // Função principal: garante que o DB exista, cria tabelas se necessário e insere dados mock
 async function seed() {
@@ -63,6 +63,10 @@ async function seed() {
         name VARCHAR(255) NOT NULL,
         role VARCHAR(50) NOT NULL DEFAULT 'contratante',
         profile_image TEXT,
+        email_confirmed BOOLEAN DEFAULT FALSE,
+        email_confirmation_token VARCHAR(255),
+        reset_password_token VARCHAR(255),
+        reset_password_expires TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -102,7 +106,7 @@ async function seed() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_highlighted BOOLEAN DEFAULT FALSE,
         highlight_phrase TEXT,
-  "references" JSONB,
+  reference_data JSONB,
         trial_ends_at TIMESTAMP
       )
     `);
@@ -182,62 +186,74 @@ async function seed() {
 
       // Inserir planos básicos
       const plansData = [
-        { name: 'Trial 30 dias', price: 0.00, duration_days: 30, features: { trial: true } },
-        { name: 'Pro Mensal', price: 29.90, duration_days: 30, features: { highlights: true, priority: true } },
-        { name: 'Pro Anual', price: 299.90, duration_days: 365, features: { highlights: true, priority: true, discount: 15 } }
+        { name: 'Free', price: 0.00, duration_days: 0, features: { trial: false, free: true, type: 'profissional' } },
+        { name: 'Trial 7 dias', price: 0.00, duration_days: 7, features: { trial: true, type: 'profissional' } },
+        { name: 'Pro Mensal', price: 39.90, duration_days: 30, features: { highlights: true, priority: true, type: 'profissional' } },
+        { name: 'Pro Trimestral', price: 99.90, duration_days: 90, features: { highlights: true, priority: true, discount: 10, type: 'profissional' } },
+        { name: 'Família Free', price: 0.00, duration_days: 0, features: { trial: false, free: true, type: 'familia', contacts_limit: 2 } },
+        { name: 'Família Premium', price: 29.90, duration_days: 7, features: { trial: false, type: 'familia', contacts_unlimited: true, priority: true } }
       ];
 
       for (const p of plansData) {
-        // Inserir plano somente se não existir (evita usar ON CONFLICT sem constraint)
-        await pool.query(`
-          INSERT INTO plans (name, price, currency, duration_days, features)
-          SELECT $1::varchar, $2::numeric, $3::varchar, $4::int, $5::jsonb
-          WHERE NOT EXISTS (SELECT 1 FROM plans WHERE name = $1::varchar)
-        `, [p.name, p.price, 'BRL', p.duration_days, JSON.stringify(p.features)]);
+        // Verificar se o plano existe
+        const existing = await pool.query('SELECT id FROM plans WHERE name = $1', [p.name]);
+        if (existing.rowCount > 0) {
+          // Atualizar plano existente
+          await pool.query(`
+            UPDATE plans SET price = $2, duration_days = $3, features = $4 WHERE name = $1
+          `, [p.name, p.price, p.duration_days, JSON.stringify(p.features)]);
+        } else {
+          // Inserir novo plano
+          await pool.query(`
+            INSERT INTO plans (name, price, currency, duration_days, features)
+            VALUES ($1, $2, $3, $4, $5)
+          `, [p.name, p.price, 'BRL', p.duration_days, JSON.stringify(p.features)]);
+        }
       }
 
     // Inserir dados mock se não existirem
     const existing = await pool.query('SELECT 1 FROM users WHERE email = $1', ['seed.user@example.com']);
     if (existing.rowCount === 0) {
+      const hashedPassword = await bcrypt.hash('123456', 10);
       const userInsert = await pool.query(
-        `INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id`,
-        ['seed.user@example.com', 'seed-password-placeholder', 'Usuario Seed', 'profissional']
+        `INSERT INTO users (email, password, name, role, email_confirmed) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        ['seed.user@example.com', hashedPassword, 'Usuario Seed', 'profissional', true]
       );
       const userId = userInsert.rows[0].id;
 
-      await pool.query(
-        `INSERT INTO professionals (
-          user_id, name, email, profession, city, state, rating, status, bio
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-        [
-          userId,
-          'João da Silva',
-          'joao.seed@example.com',
-          'Enfermeiro',
-          'São Paulo',
-          'SP',
-          4.8,
-          'active',
-          'Profissional criado pelo seed para facilitar testes.'
-        ]
-      );
-      // Criar uma assinatura de trial de 30 dias para esse profissional
-      const planRes = await pool.query(`SELECT id, duration_days FROM plans WHERE name = $1 LIMIT 1`, ['Trial 30 dias']);
-      if (planRes.rowCount > 0) {
-        const planId = planRes.rows[0].id;
-        const duration = parseInt(planRes.rows[0].duration_days, 10) || 30;
-        const now = new Date();
-        const ends = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
-        await pool.query(`
-          INSERT INTO subscriptions (user_id, plan_id, status, started_at, ends_at, auto_renew)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [userId, planId, 'trialing', now.toISOString(), ends.toISOString(), false]);
-        console.log('Assinatura de trial criada para o usuário seed.');
+        await pool.query(
+          `INSERT INTO professionals (
+            user_id, name, email, profession, city, state, rating, status, bio
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            userId,
+            'João da Silva',
+            'seed.user@example.com',
+            'Enfermeiro',
+            'São Paulo',
+            'SP',
+            4.8,
+            'approved',
+            'Profissional criado pelo seed para facilitar testes.'
+          ]
+        );
+
+        // Criar uma assinatura de trial de 7 dias para esse profissional
+        const planRes = await pool.query(`SELECT id, duration_days FROM plans WHERE name = $1 LIMIT 1`, ['Trial 7 dias']);
+        if (planRes.rowCount > 0) {
+          const planId = planRes.rows[0].id;
+          const duration = parseInt(planRes.rows[0].duration_days, 10) || 7;
+          const now = new Date();
+          const ends = new Date(now.getTime() + duration * 24 * 60 * 60 * 1000);
+          await pool.query(`
+            INSERT INTO subscriptions (user_id, plan_id, status, started_at, ends_at, auto_renew)
+            VALUES ($1, $2, $3, $4, $5, $6)
+          `, [userId, planId, 'trialing', now.toISOString(), ends.toISOString(), false]);
+        }
       }
-      console.log('Usuário e profissional mock inseridos.');
-    } else {
-      console.log('Dados mock já existem — pulando inserção.');
     }
+
+    console.log('Usuários de teste criados/verificados.');
 
     await pool.query('COMMIT');
     console.log('Seed concluído com sucesso.');

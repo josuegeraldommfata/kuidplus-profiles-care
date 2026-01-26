@@ -28,9 +28,11 @@ export function StarRating({
     lg: 'text-base',
   };
 
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  // sanitize rating to a finite number between 0 and 5
+  const safeRating = typeof rating === 'number' && Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0;
+  const fullStars = Math.floor(safeRating);
+  const hasHalfStar = safeRating % 1 >= 0.5;
+  const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
   return (
     <div className={cn('flex items-center gap-1', className)}>
@@ -58,7 +60,7 @@ export function StarRating({
       </div>
       {showCount && (
         <span className={cn('text-muted-foreground', textSizes[size])}>
-          {rating.toFixed(1)}
+          {safeRating.toFixed(1)}
           {totalRatings !== undefined && ` (${totalRatings})`}
         </span>
       )}
