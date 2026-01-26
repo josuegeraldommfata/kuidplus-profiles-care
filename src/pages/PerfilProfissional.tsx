@@ -371,10 +371,10 @@ export default function PerfilProfissional() {
                       <span className="text-sm">Verificação pendente</span>
                     </div>
                   )}
-                  {professional.backgroundCheckFile || professional.background_check_file ? (
+                  {professional.backgroundCheckFile ? (
                     <div className="mt-3">
                       <a
-                        href={professional.backgroundCheckFile || professional.background_check_file}
+                        href={professional.backgroundCheckFile}
                         target="_blank"
                         rel="noreferrer"
                         className="text-primary hover:underline text-sm"
