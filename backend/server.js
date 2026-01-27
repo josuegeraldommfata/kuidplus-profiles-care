@@ -7,7 +7,6 @@ const userRoutes = require('./routes/users');
 const professionalRoutes = require('./routes/professionals');
 const paymentRoutes = require('./routes/payments');
 const mpRoutes = require('./routes/mercadopago');
-const messageRoutes = require('./routes/messages');
 
 dotenv.config();
 
@@ -28,7 +27,22 @@ app.use('/api/users', userRoutes);
 app.use('/api/professionals', professionalRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/mercadopago', mpRoutes);
-app.use('/api/messages', messageRoutes);
+
+// Test route to check if server is working
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Server is working!' });
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Backend is running' });
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+module.exports = { pool };
 
 // Test route to check if server is working
 app.get('/api/test', (req, res) => {

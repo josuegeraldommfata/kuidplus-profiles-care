@@ -1,0 +1,250 @@
+﻿@import '@fontsource/outfit/400.css';
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/600.css';
+@import '@fontsource/outfit/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+ :root {
+ --background:18020%99%;
+ --foreground:20025%15%;
+
+ --card:00%100%;
+ --card-foreground:20025%15%;
+
+ --popover:00%100%;
+ --popover-foreground:20025%15%;
+
+ --primary:17462%40%;
+ --primary-foreground:00%100%;
+
+ --secondary:17440%95%;
+ --secondary-foreground:17462%30%;
+
+ --muted:18015%95%;
+ --muted-foreground:20015%45%;
+
+ --accent:17450%90%;
+ --accent-foreground:17462%25%;
+
+ --destructive:072%51%;
+ --destructive-foreground:00%100%;
+
+ --success:14272%40%;
+ --success-foreground:00%100%;
+
+ --warning:3892%50%;
+ --warning-foreground:00%100%;
+
+ --border:18015%90%;
+ --input:18015%90%;
+ --ring:17462%40%;
+
+ --radius:0.75rem;
+
+ /* Highlight gradient - Light Blue to Lilac */
+ --highlight-start:19585%55%;
+ --highlight-end:27070%65%;
+ --gradient-highlight: linear-gradient(135deg, hsl(195,85%,55%)0%, hsl(270,70%,65%)100%);
+ 
+ /* Custom gradients */
+ --gradient-primary: linear-gradient(135deg, hsl(174,62%,40%)0%, hsl(174,72%,50%)100%);
+ --gradient-hero: linear-gradient(180deg, hsl(180,20%,99%)0%, hsl(174,40%,96%)100%);
+ --gradient-card: linear-gradient(180deg, hsl(0,0%,100%)0%, hsl(180,15%,98%)100%);
+
+ /* Shadows */
+ --shadow-sm:01px2px0 hsl(20025%15% /0.05);
+ --shadow-md:04px6px -1px hsl(20025%15% /0.07),02px4px -2px hsl(20025%15% /0.05);
+ --shadow-lg:010px15px -3px hsl(20025%15% /0.08),04px6px -4px hsl(20025%15% /0.05);
+ --shadow-glow:0020px hsl(17462%40% /0.15);
+ --shadow-highlight:0025px hsl(27070%65% /0.25);
+
+ --sidebar-background:00%98%;
+ --sidebar-foreground:20025%15%;
+ --sidebar-primary:17462%40%;
+ --sidebar-primary-foreground:00%100%;
+ --sidebar-accent:17440%95%;
+ --sidebar-accent-foreground:17462%30%;
+ --sidebar-border:18015%90%;
+ --sidebar-ring:17462%40%;
+ }
+
+ .dark {
+ --background:20025%8%;
+ --foreground:18020%98%;
+
+ --card:20025%12%;
+ --card-foreground:18020%98%;
+
+ --popover:20025%12%;
+ --popover-foreground:18020%98%;
+
+ --primary:17462%50%;
+ --primary-foreground:20025%8%;
+
+ --secondary:20020%18%;
+ --secondary-foreground:18020%90%;
+
+ --muted:20020%18%;
+ --muted-foreground:18015%60%;
+
+ --accent:20020%22%;
+ --accent-foreground:18020%95%;
+
+ --destructive:072%51%;
+ --destructive-foreground:00%100%;
+
+ --success:14272%45%;
+ --success-foreground:00%100%;
+
+ --warning:3892%50%;
+ --warning-foreground:00%100%;
+
+ --border:20020%20%;
+ --input:20020%20%;
+ --ring:17462%50%;
+
+ --gradient-highlight: linear-gradient(135deg, hsl(195,85%,50%)0%, hsl(270,70%,60%)100%);
+ --gradient-primary: linear-gradient(135deg, hsl(174,62%,45%)0%, hsl(174,72%,55%)100%);
+ --gradient-hero: linear-gradient(180deg, hsl(200,25%,8%)0%, hsl(200,25%,12%)100%);
+ --gradient-card: linear-gradient(180deg, hsl(200,25%,12%)0%, hsl(200,25%,10%)100%);
+
+ --shadow-highlight:0030px hsl(27070%60% /0.3);
+
+ --sidebar-background:20025%10%;
+ --sidebar-foreground:18020%98%;
+ --sidebar-primary:17462%50%;
+ --sidebar-primary-foreground:20025%8%;
+ --sidebar-accent:20020%18%;
+ --sidebar-accent-foreground:18020%95%;
+ --sidebar-border:20020%20%;
+ --sidebar-ring:17462%50%;
+ }
+}
+
+@layer base {
+ * {
+ @apply border-border;
+ }
+
+ body {
+ @apply bg-background text-foreground font-outfit antialiased;
+ }
+
+ h1, h2, h3, h4, h5, h6 {
+ @apply font-outfit font-semibold tracking-tight;
+ }
+}
+
+/* Responsive / fluid typography and utilities */
+html {
+ /* Base font scales between15px and18px depending on viewport width */
+ font-size: clamp(15px,1.2vw +12px,18px);
+}
+
+h1 {
+ font-size: clamp(1.6rem,4.4vw,3.6rem);
+ line-height:1.05;
+}
+
+h2 {
+ font-size: clamp(1.25rem,3.2vw,2.4rem);
+}
+
+p, li, a, button {
+ font-size: clamp(0.95rem,0.9vw +0.3rem,1.05rem);
+}
+
+/* Make images and svg scale nicely */
+img, svg {
+ max-width:100%;
+ height: auto;
+ display: block;
+}
+
+/* Ensure header nav wraps gracefully on very small screens */
+header .container {
+ width:100%;
+}
+
+/* Reduce horizontal padding on very small devices */
+@media (max-width:420px) {
+ .container {
+ padding-left:0.5rem;
+ padding-right:0.5rem;
+ }
+ nav a {
+ font-size:0.85rem;
+ }
+}
+
+@layer utilities {
+ .gradient-primary {
+ background: var(--gradient-primary);
+ }
+
+ .gradient-hero {
+ background: var(--gradient-hero);
+ }
+
+ .gradient-card {
+ background: var(--gradient-card);
+ }
+
+ .gradient-highlight {
+ background: var(--gradient-highlight);
+ }
+
+ .text-gradient-highlight {
+ background: var(--gradient-highlight);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ background-clip: text;
+ }
+
+ .border-gradient-highlight {
+ border:2px solid transparent;
+ background: linear-gradient(var(--background), var(--background)) padding-box,
+ var(--gradient-highlight) border-box;
+ }
+
+ .icon-gradient-highlight {
+ background: var(--gradient-highlight);
+ -webkit-background-clip: text;
+ -webkit-text-fill-color: transparent;
+ background-clip: text;
+ }
+
+ .shadow-glow {
+ box-shadow: var(--shadow-glow);
+ }
+
+ .shadow-highlight {
+ box-shadow: var(--shadow-highlight);
+ }
+
+ .text-balance {
+ text-wrap: balance;
+ }
+
+ /* Highlight card styling */
+ .card-highlighted {
+ position: relative;
+ border:2px solid transparent;
+ background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+ var(--gradient-highlight) border-box;
+ }
+
+ .card-highlighted::before {
+ content: '';
+ position: absolute;
+ inset: -2px;
+ border-radius: inherit;
+ background: var(--gradient-highlight);
+ opacity:0.1;
+ z-index: -1;
+ }
+}

@@ -1,11 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/StarRating';
-import { mockProfessionals, calculateAge, getDisplayName } from '@/data/mockData';
+import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Helper functions
+const calculateAge = (birthDate) => {
+  if (!birthDate) return null;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const getDisplayName = (name, isHighlighted) => {
+  return name;
+};
 import {
   Dialog,
   DialogContent,
@@ -36,14 +54,44 @@ export default function PerfilProfissional() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [professional, setProfessional] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
 
-  const professional = mockProfessionals.find((p) => p.id === id);
+  useEffect(() => {
+    const fetchProfessional = async () => {
+      try {
+        setLoading(true);
+        const endpoint = id === 'me' ? '/api/professionals/me/profile' : `/api/professionals/${id}`;
+        const response = await api.get(endpoint);
+        setProfessional(response.data);
+      } catch (err) {
+        console.error('Error fetching professional:', err);
+        setError('Profissional não encontrado');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!professional) {
+    fetchProfessional();
+  }, [id]);
+
+  if (loading) {
     return (
       <Layout>
         <div className="container py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Profissional não encontrado</h1>
+          <p>Carregando...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !professional) {
+    return (
+      <Layout>
+        <div className="container py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4">{error || 'Profissional não encontrado'}</h1>
           <Button onClick={() => navigate('/buscar')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para busca
@@ -101,7 +149,7 @@ export default function PerfilProfissional() {
                 <div className="md:flex">
                   <div className="md:w-64 md:shrink-0 relative">
                     <img
-                      src={professional.profileImage}
+                      src={professional.profile_image ? professional.profile_image : '/placeholder.svg'}
                       alt={displayName}
                       className="w-full h-64 md:h-full object-cover"
                     />
@@ -113,12 +161,12 @@ export default function PerfilProfissional() {
                         </Badge>
                       </div>
                     )}
-                    {professional.videoUrl && professional.isHighlighted && (
-                      <div className="absolute bottom-3 right-3">
-                        <Button size="sm" variant="secondary" className="shadow-lg">
-                          <Play className="w-4 h-4 mr-1" />
-                          Ver vídeo
-                        </Button>
+                    {professional.video_url && (
+                      <div className="my-4">
+                        <video controls width="100%" style={{ maxWidth:400 }}>
+                          <source src={professional.video_url} type="video/mp4" />
+                          Seu navegador não suporta vídeo.
+                        </video>
                       </div>
                     )}
                   </div>
@@ -159,7 +207,7 @@ export default function PerfilProfissional() {
                     <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
-                        {professional.city}, {professional.region}
+                        {professional.city}{professional.state ? `, ${professional.state}` : ''}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
@@ -215,6 +263,30 @@ export default function PerfilProfissional() {
                         <MessageCircle className="mr-2 h-5 w-5" />
                         WhatsApp
                       </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {professional.certificates && professional.certificates.length >0 && (
+                        professional.certificates.map((cert, index) => (
+                          <img
+                            key={index}
+                            src={cert.file}
+                            alt={cert.name || 'Certificado'}
+                            style={{ width:100, height:100, objectFit: 'cover', borderRadius:8, border: '1px solid #eee' }}
+                          />
+                        ))
+                      )}
+                    </div>
+
+                    <div className="mt-2">
+                      <span className="font-medium">WhatsApp: </span>
+                      {professional.whatsapp ? (
+                        <a href={`https://wa.me/${professional.whatsapp}`} target="_blank" rel="noopener noreferrer">
+                          {professional.whatsapp}
+                        </a>
+                      ) : (
+                        'Não informado'
+                      )}
                     </div>
                   </CardContent>
                 </div>

@@ -8,6 +8,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
+  updateUser: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +17,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // normalize user object to include both profile_image and profileImage
+  const normalizeUser = (u: any) => {
+    if (!u) return null;
+    const profile_image = (u.profile_image as any) || (u.profileImage as any) || null;
+    return { ...u, profile_image, profileImage: profile_image } as User;
+  };
+
   // Check for existing token on mount
   useEffect(() => {
     const token = localStorage.getItem('kuid_token');
@@ -23,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verify token and get user data
       api.get('/api/auth/me')
         .then(response => {
-          setUser(response.data.user);
+          setUser(normalizeUser(response.data.user));
         })
         .catch(() => {
           localStorage.removeItem('kuid_token');
@@ -37,34 +45,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user: userData } = response.data;
+      const { token, user: userData } = response.data as any;
 
       if (!token || !userData) {
         throw new Error('Resposta inválida do servidor');
       }
 
       localStorage.setItem('kuid_token', token);
-      setUser(userData);
+      setUser(normalizeUser(userData));
 
       return {
         success: true,
         message: 'Login realizado com sucesso!',
-        user: userData
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error details:', {
         message: error.message,
         response: error.response?.data,
-        status: error.response?.status
+        status: error.response?.status,
       });
 
       const errorMessage = error.response?.data?.error || error.message || 'Erro ao fazer login. Verifique suas credenciais.';
 
       return {
         success: false,
-        message: errorMessage
+        message: errorMessage,
       };
     }
+  };
+
+  const updateUser = (data: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return normalizeUser(data as any);
+      const merged: any = { ...prev, ...data };
+      merged.profile_image = merged.profile_image || merged.profileImage || null;
+      merged.profileImage = merged.profile_image;
+      return merged as User;
+    });
   };
 
   const logout = () => {
@@ -73,15 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isAuthenticated: !!user,
-        loading,
-      }}
-    >
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -100,6 +109,7 @@ export function useAuth() {
         logout: () => {},
         isAuthenticated: false,
         loading: false,
+        updateUser: () => {},
       };
     }
     throw new Error('useAuth must be used within an AuthProvider');

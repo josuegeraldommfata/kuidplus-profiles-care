@@ -78,7 +78,7 @@ interface Professional {
 }
 
 export default function DashboardProfissional() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [userData, setUserData] = useState<User | null>(null);
@@ -101,11 +101,20 @@ export default function DashboardProfissional() {
     priceMin: myProfile?.price_range?.min?.toString() || '',
     priceMax: myProfile?.price_range?.max?.toString() || '',
     birthDate: myProfile?.birth_date || '',
+    city: myProfile?.city || '',
+    state: myProfile?.state || '',
+    whatsapp: myProfile?.whatsapp || '',
+    profession: myProfile?.profession || '',
+    sex: myProfile?.sex || '',
+    region: myProfile?.region || '',
   });
 
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [backgroundCheckFile, setBackgroundCheckFile] = useState<File | null>(null);
   const [certificateFiles, setCertificateFiles] = useState<File[] | null>(null);
+  // Adicionar estado para vídeo
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // useEffect para buscar dados do usuário logado
   useEffect(() => {
@@ -150,6 +159,12 @@ export default function DashboardProfissional() {
           priceMin: response.data?.price_range?.min?.toString() || '',
           priceMax: response.data?.price_range?.max?.toString() || '',
           birthDate: response.data?.birth_date || '',
+          city: response.data?.city || '',
+          state: response.data?.state || '',
+          whatsapp: response.data?.whatsapp || '',
+          profession: response.data?.profession || '',
+          sex: response.data?.sex || '',
+          region: response.data?.region || '',
         });
       } catch (error) {
         console.error('Erro ao buscar perfil profissional:', error);
@@ -166,10 +181,47 @@ export default function DashboardProfissional() {
     fetchProfile();
   }, [user?.id]);
 
+  // update formData when myProfile loads
+  useEffect(() => {
+    if (myProfile) {
+      setFormData({
+        bio: myProfile.bio || '',
+        serviceArea: myProfile.service_area || '',
+        serviceRadius: myProfile.service_radius?.toString() || '10',
+        hospitals: myProfile.hospitals?.join(', ') || '',
+        priceMin: myProfile.price_range?.min?.toString() || '',
+        priceMax: myProfile.price_range?.max?.toString() || '',
+        birthDate: myProfile.birth_date || '',
+        city: myProfile.city || '',
+        state: myProfile.state || '',
+        whatsapp: myProfile.whatsapp || '',
+        profession: myProfile.profession || '',
+        sex: myProfile.sex || '',
+        region: myProfile.region || '',
+      });
+      // set preview to existing image
+      if (myProfile.profile_image) setProfilePhotoPreview(myProfile.profile_image);
+    }
+  }, [myProfile]);
+
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
-    if (file) setProfilePhotoFile(file);
+    if (file) {
+      setProfilePhotoFile(file);
+      // create preview URL
+      const url = URL.createObjectURL(file);
+      setProfilePhotoPreview(url);
+    }
   };
+
+  // cleanup preview URL on unmount or when profilePhotoFile changes
+  useEffect(() => {
+    return () => {
+      if (profilePhotoPreview && profilePhotoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePhotoPreview);
+      }
+    };
+  }, [profilePhotoPreview]);
 
   const handleBackgroundCheckChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
@@ -181,8 +233,13 @@ export default function DashboardProfissional() {
     setCertificateFiles(files);
   };
 
+  // Adicionar handler para vídeo
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) setVideoFile(file);
+  };
+
   const handleSave = async () => {
-    // Build form data to send including files
     const payload = new FormData();
     Object.entries(formData).forEach(([k, v]) => {
       if (v !== undefined && v !== null) payload.append(k, String(v));
@@ -192,6 +249,7 @@ export default function DashboardProfissional() {
     if (certificateFiles && certificateFiles.length > 0) {
       certificateFiles.forEach((f) => payload.append('certificates', f));
     }
+    if (videoFile) payload.append('video', videoFile);
 
     try {
       const response = await api.put('/api/professionals/update', payload, {
@@ -201,13 +259,20 @@ export default function DashboardProfissional() {
       });
 
       if (response.status === 200) {
+        // Use returned professional to update UI immediately
+        const updated = response.data;
+        setMyProfile(updated);
+        // update AuthContext user profile image so header updates
+        if (updateUser) {
+          updateUser({ profile_image: updated.profile_image } as any);
+        }
+
         alert('Perfil salvo com sucesso!');
-        // Reset file states
+        // Reset file states but keep preview to updated image url
         setProfilePhotoFile(null);
         setBackgroundCheckFile(null);
         setCertificateFiles(null);
-        // Recarregar o perfil
-        window.location.reload();
+        setVideoFile(null);
       } else {
         alert('Erro ao salvar perfil.');
       }
@@ -282,7 +347,7 @@ export default function DashboardProfissional() {
   }
 
   // Mostrar erro se não conseguiu carregar o perfil
-  if (errorProfile || !myProfile) {
+  if (errorProfile && !myProfile) {
     return (
       <Layout hideFooter>
         <div className="min-h-screen bg-muted/30 flex items-center justify-center">
@@ -735,10 +800,48 @@ export default function DashboardProfissional() {
                       id="bio"
                       rows={5}
                       value={formData.bio}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, bio: e.target.value }))
-                      }
+                      onChange={(e) => setFormData((f) => ({ ...f, bio: e.target.value }))}
                     />
+                  </div>
+
+                  {/* Location */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData((f) => ({ ...f, city: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">Estado</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => setFormData((f) => ({ ...f, state: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contact */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="whatsapp">WhatsApp</Label>
+                      <Input
+                        id="whatsapp"
+                        value={formData.whatsapp}
+                        onChange={(e) => setFormData((f) => ({ ...f, whatsapp: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="profession">Profissão</Label>
+                      <Input
+                        id="profession"
+                        value={formData.profession}
+                        onChange={(e) => setFormData((f) => ({ ...f, profession: e.target.value }))}
+                      />
+                    </div>
                   </div>
 
                   {/* Service Area */}
@@ -748,9 +851,7 @@ export default function DashboardProfissional() {
                       <Input
                         id="serviceArea"
                         value={formData.serviceArea}
-                        onChange={(e) =>
-                          setFormData((f) => ({ ...f, serviceArea: e.target.value }))
-                        }
+                        onChange={(e) => setFormData((f) => ({ ...f, serviceArea: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
@@ -762,9 +863,7 @@ export default function DashboardProfissional() {
                         id="serviceRadius"
                         type="number"
                         value={formData.serviceRadius}
-                        onChange={(e) =>
-                          setFormData((f) => ({ ...f, serviceRadius: e.target.value }))
-                        }
+                        onChange={(e) => setFormData((f) => ({ ...f, serviceRadius: e.target.value }))}
                       />
                     </div>
                   </div>
@@ -777,9 +876,7 @@ export default function DashboardProfissional() {
                     <Input
                       id="hospitals"
                       value={formData.hospitals}
-                      onChange={(e) =>
-                        setFormData((f) => ({ ...f, hospitals: e.target.value }))
-                      }
+                      onChange={(e) => setFormData((f) => ({ ...f, hospitals: e.target.value }))}
                     />
                   </div>
 
@@ -791,9 +888,7 @@ export default function DashboardProfissional() {
                         id="priceMin"
                         type="number"
                         value={formData.priceMin}
-                        onChange={(e) =>
-                          setFormData((f) => ({ ...f, priceMin: e.target.value }))
-                        }
+                        onChange={(e) => setFormData((f) => ({ ...f, priceMin: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
@@ -802,9 +897,7 @@ export default function DashboardProfissional() {
                         id="priceMax"
                         type="number"
                         value={formData.priceMax}
-                        onChange={(e) =>
-                          setFormData((f) => ({ ...f, priceMax: e.target.value }))
-                        }
+                        onChange={(e) => setFormData((f) => ({ ...f, priceMax: e.target.value }))}
                       />
                     </div>
                   </div>
@@ -819,7 +912,7 @@ export default function DashboardProfissional() {
                       </p>
                       <Input
                         type="file"
-                        accept="application/pdf"
+                        accept="image/png, image/jpeg, image/jpg"
                         multiple
                         onChange={handleCertificatesChange}
                         className="cursor-pointer"
@@ -839,6 +932,25 @@ export default function DashboardProfissional() {
                       )}
                     </div>
                   </div>
+
+                  {/* Video Upload - Only for Highlighted */}
+                  {myProfile?.is_highlighted && (
+                    <div className="space-y-2">
+                      <Label>Vídeo de Apresentação (MP4)</Label>
+                      <Input
+                        type="file"
+                        accept="video/mp4"
+                        onChange={handleVideoChange}
+                        className="cursor-pointer"
+                        id="video"
+                      />
+                      {videoFile && (
+                        <p className="text-sm text-success mt-2">
+                          Arquivo selecionado: {videoFile.name}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <Button onClick={handleSave} className="w-full sm:w-auto gradient-highlight border-0">
                     <Save className="mr-2 h-4 w-4" />

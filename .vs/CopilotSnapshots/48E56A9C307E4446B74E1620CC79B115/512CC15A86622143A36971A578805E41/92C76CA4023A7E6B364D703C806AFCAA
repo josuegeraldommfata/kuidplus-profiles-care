@@ -1,0 +1,619 @@
+﻿import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Layout } from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StarRating } from '@/components/ui/StarRating';
+import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
+import api from '@/lib/api';
+import { brazilianStates, priceRanges, professionOptions, getDisplayName, Professional } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  Search,
+  Filter,
+  CheckCircle,
+  MapPin,
+  X,
+  Sparkles,
+  Play,
+  Eye,
+} from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+
+export default function Buscar() {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    state: '',
+    city: '',
+    profession: '',
+    sex: '',
+    priceRange: '',
+    minRating: '',
+  });
+  const [sortBy, setSortBy] = useState<'recent' | 'rating'>('recent');
+
+  // Server-side data
+  const [highlightedProfessionals, setHighlightedProfessionals] = useState<Professional[]>([]);
+  const [regularProfessionals, setRegularProfessionals] = useState<Professional[]>([]);
+  const [totalRegular, setTotalRegular] = useState<number>(0);
+  const [searchDebounced, setSearchDebounced] = useState<string>('');
+  const [professionList, setProfessionList] = useState<string[]>(professionOptions);
+  const [loading, setLoading] = useState<boolean>(false);
+  // Pagination state (only for regular professionals) - moved up to be available to effects
+  const authCtx = useAuth();
+  const currentUser = authCtx?.user;
+  const isAuthenticated = !!authCtx?.isAuthenticated;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  // debounce searchTerm into searchDebounced
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(searchTerm.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // Build base params for both highlighted and regular requests
+        const baseParams: Record<string, string | number | boolean> = {};
+        if (searchDebounced) baseParams.q = searchDebounced;
+        if (filters.state) baseParams.state = filters.state;
+        if (filters.city) baseParams.city = filters.city;
+        if (filters.profession) baseParams.profession = filters.profession;
+        if (filters.sex) baseParams.sex = filters.sex;
+        if (filters.minRating) baseParams.minRating = filters.minRating;
+        if (sortBy) baseParams.sortBy = sortBy;
+
+        // Highlighted: respect same filters but small limit
+        const hlParams = { ...baseParams, highlighted: true, limit: 5 };
+        const hlRes = await api.get('/api/professionals', { params: hlParams });
+        if (!cancelled) {
+          const hlData = hlRes.data;
+          const hlItemsRaw = Array.isArray(hlData)
+            ? hlData
+            : Array.isArray(hlData?.items)
+            ? hlData.items
+            : hlData
+            ? hlData
+            : [];
+          const hlItems = Array.isArray(hlItemsRaw) ? hlItemsRaw : [hlItemsRaw].filter(Boolean);
+          // Filter out highlighted professionals with invalid names
+          const validHlItems = hlItems.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          setHighlightedProfessionals(validHlItems as Professional[]);
+        }
+
+        // Regular (server-side paged)
+        const params = { ...baseParams, page: currentPage, limit: itemsPerPage, highlighted: false };
+        const res = await api.get('/api/professionals', { params });
+        if (!cancelled) {
+          const data = res.data;
+          const itemsRaw = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : data?.items || data || [];
+          const items = Array.isArray(itemsRaw) ? itemsRaw : [itemsRaw].filter(Boolean);
+          // Filter out professionals with invalid names
+          const validItems = items.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          const total = typeof data?.total === 'number' ? data.total : parseInt(data?.total || '0', 10) || (Array.isArray(validItems) ? validItems.length : 0);
+          setRegularProfessionals(validItems as Professional[]);
+          setTotalRegular(total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch professionals', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    // fetch profession types once (if empty or default)
+    let cancelledTypes = false;
+    async function fetchTypes() {
+      try {
+        const t = await api.get('/api/professionals/types/list');
+        if (!cancelledTypes && Array.isArray(t.data) && t.data.length > 0) setProfessionList(t.data as string[]);
+      } catch (err) {
+        console.warn('Could not load profession types, using fallback', err);
+      }
+    }
+
+    fetchTypes();
+    fetchData();
+    return () => { cancelled = true; cancelledTypes = true; };
+  }, [searchDebounced, filters, sortBy, currentPage, itemsPerPage]);
+
+
+  const clearFilters = () => {
+    setFilters({
+      state: '',
+      city: '',
+      profession: '',
+      sex: '',
+      priceRange: '',
+      minRating: '',
+    });
+    setSearchTerm('');
+  };
+
+  const activeFiltersCount = Object.values(filters).filter(Boolean).length;
+
+  const FilterContent = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Estado</label>
+        <Select
+          value={filters.state || "all"}
+          onValueChange={(value) => setFilters((f) => ({ ...f, state: value === "all" ? "" : value }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todos os estados" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os estados</SelectItem>
+            {brazilianStates.map((state) => (
+              <SelectItem key={state} value={state}>
+                {state}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Cidade</label>
+        <CityAutocomplete
+          value={filters.city}
+          onChange={(value) => setFilters((f) => ({ ...f, city: value }))}
+          placeholder="Digite a cidade"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Categoria</label>
+        <Select
+          value={filters.profession || "all"}
+          onValueChange={(value) =>
+            setFilters((f) => ({ ...f, profession: value === "all" ? "" : value }))
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todas as categorias" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as categorias</SelectItem>
+            {professionList.map((prof) => (
+              <SelectItem key={prof} value={prof}>
+                {prof}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Sexo</label>
+        <Select
+          value={filters.sex || "all"}
+          onValueChange={(value) => setFilters((f) => ({ ...f, sex: value === "all" ? "" : value }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="Masculino">Masculino</SelectItem>
+            <SelectItem value="Feminino">Feminino</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Valor por 12 horas</label>
+        <Select
+          value={filters.priceRange || "all"}
+          onValueChange={(value) =>
+            setFilters((f) => ({ ...f, priceRange: value === "all" ? "" : value }))
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todas as faixas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as faixas</SelectItem>
+            {priceRanges.map((range) => (
+              <SelectItem key={range.label} value={range.label}>
+                {range.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Avaliação mínima</label>
+        <Select
+          value={filters.minRating || "all"}
+          onValueChange={(value) =>
+            setFilters((f) => ({ ...f, minRating: value === "all" ? "" : value }))
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Qualquer avaliação" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Qualquer avaliação</SelectItem>
+            <SelectItem value="4.5">4.5+ estrelas</SelectItem>
+            <SelectItem value="4.0">4.0+ estrelas</SelectItem>
+            <SelectItem value="3.5">3.5+ estrelas</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {activeFiltersCount > 0 && (
+        <Button variant="outline" className="w-full" onClick={clearFilters}>
+          <X className="mr-2 h-4 w-4" />
+          Limpar filtros ({activeFiltersCount})
+        </Button>
+      )}
+    </div>
+  );
+
+  useEffect(() => {
+    // reset to first page when filters/search/sort or itemsPerPage change
+    setCurrentPage(1);
+  }, [searchTerm, filters, sortBy, itemsPerPage, setCurrentPage]);
+
+  // totalRegular is provided by server (total count of non-highlighted results)
+  const totalPages = Math.max(1, Math.ceil(totalRegular / itemsPerPage));
+  // regularProfessionals is already paginated server-side
+  const paginatedRegular = Array.isArray(regularProfessionals) ? regularProfessionals : [];
+  const highlightedCount = Array.isArray(highlightedProfessionals) ? highlightedProfessionals.length : 0;
+  const totalFound = highlightedCount + totalRegular;
+
+  // Helper for page numbers window
+  function getPageNumbers(total: number, current: number, maxWindow = 5) {
+    const pages: number[] = [];
+    if (total <= maxWindow) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+      return pages;
+    }
+    let start = Math.max(1, current - Math.floor(maxWindow / 2));
+    let end = start + maxWindow - 1;
+    if (end > total) {
+      end = total;
+      start = total - maxWindow + 1;
+    }
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  // compute page numbers safely (guard against unexpected values or HMR state)
+  let pageNumbers: number[] = [1];
+  try {
+    pageNumbers = getPageNumbers(totalPages, typeof currentPage === 'number' ? currentPage : 1);
+  } catch (e) {
+    pageNumbers = [1];
+  }
+
+  // Corrigir foto de perfil para usar professional.profile_image
+  // Adicionar filtro automático por cidade do usuário logado (contratante)
+
+  useEffect(() => {
+    // Se usuário logado for contratante e não filtrou cidade, filtrar por cidade do usuário
+    if (
+      isAuthenticated &&
+      currentUser?.role === 'contratante' &&
+      currentUser?.cidade &&
+      !filters.city
+    ) {
+      setFilters((f) => ({ ...f, city: currentUser.cidade }));
+    }
+    // eslint-disable-next-line
+  }, [isAuthenticated, currentUser]);
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-muted/30">
+        {/* Search Header */}
+        <div className="bg-background border-b border-border sticky top-16 z-40">
+          <div className="container py-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome, cidade ou categoria..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {/* Sort & Filter */}
+              <div className="flex gap-2">
+                <Select
+                  value={sortBy}
+                  onValueChange={(value: 'recent' | 'rating') => setSortBy(value)}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Mais recentes</SelectItem>
+                    <SelectItem value="rating">Melhor avaliação</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Mobile Filter Button */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="md:hidden relative">
+                      <Filter className="h-4 w-4" />
+                      {activeFiltersCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full gradient-highlight text-white text-xs flex items-center justify-center">
+                          {activeFiltersCount}
+                        </span>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Filtros</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4">
+                      <FilterContent />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="container py-6">
+          <div className="flex gap-6">
+            {/* Desktop Filters Sidebar */}
+            <aside className="hidden md:block w-64 shrink-0">
+              <Card className="sticky top-36">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filtros
+                  </h3>
+                  <FilterContent />
+                </CardContent>
+              </Card>
+            </aside>
+
+            {/* Results */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-muted-foreground">
+                  {totalFound} profissional{totalFound !== 1 ? 's' : ''} encontrado{totalFound !== 1 ? 's' : ''}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {(() => {
+                    // compute displayed range for regular results (highlighted shown separately above)
+                    const regularCount = regularProfessionals.length;
+                    const start = totalRegular === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+                    const end = totalRegular === 0 ? highlightedProfessionals.length : start + regularCount - 1;
+                    if (totalFound === 0) return 'Mostrando 0 de 0';
+                    return `Mostrando ${start}–${end} de ${totalFound}`;
+                  })()}
+                </div>
+              </div>
+
+              {totalFound === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">
+                    Nenhum profissional encontrado com os filtros selecionados.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={clearFilters}
+                  >
+                    Limpar filtros
+                  </Button>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {/* Highlighted Professionals Section */}
+                  {Array.isArray(highlightedProfessionals) && highlightedProfessionals.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-gradient-highlight" />
+                        <h3 className="font-semibold text-gradient-highlight">Profissionais em Destaque</h3>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {highlightedProfessionals.filter(professional => professional && professional.name).map((professional, index) => (
+                          <Card
+                            key={professional.id ?? `hl-${index}`}
+                            className="overflow-hidden hover:shadow-highlight transition-all cursor-pointer group animate-fade-in card-highlighted"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                            onClick={() => navigate(`/profissional/${professional.id}`)}
+                          >
+                            <div className="aspect-square relative overflow-hidden">
+                              <img
+                                src={professional.profile_image}
+                                alt={professional.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-2 left-2 right-2 flex justify-between">
+                                <div className="px-2 py-1 rounded-full gradient-highlight text-white text-[10px] font-medium flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" />
+                                  Destaque
+                                </div>
+                                {professional.videoUrl && (
+                                  <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
+                                    <Play className="w-3 h-3 text-white" />
+                                  </div>
+                                )}
+                              </div>
+                              {professional.backgroundCheck && (
+                                <div className="absolute bottom-2 left-2 bg-success text-success-foreground px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Verificado
+                                </div>
+                              )}
+                            </div>
+                            <CardContent className="p-3">
+                              <h3 className="font-semibold text-sm truncate">{professional.name}</h3>
+                              <p className="text-xs text-gradient-highlight font-medium">{professional.profession}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {professional.city}, {professional.region}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between mt-2">
+                                <StarRating
+                                  rating={professional.rating}
+                                  totalRatings={professional.totalRatings}
+                                  size="sm"
+                                  showCount={false}
+                                />
+                                <span className="text-xs font-medium">
+                                  R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
+                                </span>
+                              </div>
+                              {professional.highlightPhrase && (
+                                <p className="text-[10px] text-muted-foreground mt-2 line-clamp-2 italic">
+                                  {professional.highlightPhrase}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
+                                <Eye className="w-3 h-3" />
+                                {professional.weeklyViews} acessos esta semana
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Regular Professionals Section */}
+                      {Array.isArray(regularProfessionals) && regularProfessionals.length > 0 && (
+                        <div>
+                          {highlightedProfessionals.length > 0 && (
+                            <h3 className="font-semibold mb-4 text-muted-foreground">Outros Profissionais</h3>
+                          )}
+
+                          {/* Contratante-only: items-per-page selector and pagination controls */}
+                              {isAuthenticated && currentUser?.role === 'contratante' && (
+                            <div className="flex items-center justify-end gap-3 mb-4">
+                              <div className="text-sm text-muted-foreground mr-2">Mostrar por página:</div>
+                              <Select
+                                value={String(itemsPerPage)}
+                                onValueChange={(val) => setItemsPerPage(parseInt(val, 10))}
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="6">6</SelectItem>
+                                  <SelectItem value="12">12</SelectItem>
+                                  <SelectItem value="24">24</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              {/* Pagination controls: Prev, numbered pages, Next */}
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                  disabled={currentPage <= 1}
+                                >
+                                  ◀
+                                </Button>
+
+                                {pageNumbers.map((p) => (
+                                  <Button
+                                    key={p}
+                                    variant={p === currentPage ? 'default' : 'ghost'}
+                                    onClick={() => setCurrentPage(p)}
+                                  >
+                                    {p}
+                                  </Button>
+                                ))}
+
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                  disabled={currentPage >= totalPages}
+                                >
+                                  ▶
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {Array.isArray(paginatedRegular) && paginatedRegular.filter(professional => professional && professional.name).map((professional, index) => (
+                          <Card
+                            key={professional.id ?? `reg-${(currentPage-1)*itemsPerPage + index}`}
+                            className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group animate-fade-in"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                            onClick={() => navigate(`/profissional/${professional.id}`)}
+                          >
+                            <div className="aspect-square relative overflow-hidden">
+                              <img
+                                src={professional.profile_image}
+                                alt={getDisplayName(professional.name, professional.isHighlighted)}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                            <CardContent className="p-3">
+                              <h3 className="font-semibold text-sm truncate">
+                                {getDisplayName(professional.name, professional.isHighlighted)}
+                              </h3>
+                              <p className="text-xs text-primary font-medium">{professional.profession}</p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {professional.city}, {professional.region}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between mt-2">
+                                <StarRating
+                                  rating={professional.rating}
+                                  totalRatings={professional.totalRatings}
+                                  size="sm"
+                                  showCount={false}
+                                />
+                                <span className="text-xs font-medium">
+                                  R$ {professional?.priceRange?.min ?? '--'}–{professional?.priceRange?.max ?? '--'}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground mt-2">
+                                {professional.experienceYears} anos de exp. • {professional.availability === 'hospital' ? 'Hospital' : professional.availability === 'domicilio' ? 'Domicílio' : 'Hosp/Dom'}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}

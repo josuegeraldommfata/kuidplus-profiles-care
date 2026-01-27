@@ -54,7 +54,23 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+ storage,
+ fileFilter: (req, file, cb) => {
+ // Permitir apenas JPG e PNG para foto de perfil e certificados
+ if (
+ (file.fieldname === 'profilePhoto' || file.fieldname === 'certificates') &&
+ !['image/jpeg', 'image/png', 'image/jpg'].includes(file.mimetype)
+ ) {
+ return cb(new Error('Apenas arquivos JPG e PNG são permitidos para foto de perfil e certificados!'), false);
+ }
+ // Permitir apenas MP4 para vídeo de apresentação
+ if (file.fieldname === 'video' && file.mimetype !== 'video/mp4') {
+ return cb(new Error('Apenas arquivos MP4 são permitidos para vídeo de apresentação!'), false);
+ }
+ cb(null, true);
+ }
+});
 
 // Get professionals with optional pagination, search and highlighted filter
 router.get('/', async (req, res) => {
@@ -159,7 +175,7 @@ router.get('/me/profile', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM professionals WHERE user_id = $1', [req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Professional profile not found' });
-    
+
     // Parse JSON fields
     const profile = result.rows[0];
     if (profile.certificates && typeof profile.certificates === 'string') {
@@ -183,49 +199,66 @@ router.get('/me/profile', authenticateToken, async (req, res) => {
         profile.price_range = null;
       }
     }
-    
+
     res.json(profile);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get professional by ID
+// Get professional by ID (tries by professional id first, then by user_id)
 router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const result = await pool.query('SELECT * FROM professionals WHERE id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Professional not found' });
-    
-    // Parse JSON fields
-    const profile = result.rows[0];
-    if (profile.certificates && typeof profile.certificates === 'string') {
-      try {
-        profile.certificates = JSON.parse(profile.certificates);
-      } catch (e) {
-        profile.certificates = [];
-      }
-    }
-    if (profile.hospitals && typeof profile.hospitals === 'string') {
-      try {
-        profile.hospitals = JSON.parse(profile.hospitals);
-      } catch (e) {
-        profile.hospitals = [];
-      }
-    }
-    if (profile.price_range && typeof profile.price_range === 'string') {
-      try {
-        profile.price_range = JSON.parse(profile.price_range);
-      } catch (e) {
-        profile.price_range = null;
-      }
-    }
-    
-    res.json(profile);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+ try {
+ const { id } = req.params;
+
+ // First try to fetch by professional id
+ let result = await pool.query('SELECT * FROM professionals WHERE id = $1', [id]);
+
+ // If not found by professional id, try by user_id (so /profissional/:userId works)
+ if (result.rows.length ===0) {
+ result = await pool.query('SELECT * FROM professionals WHERE user_id = $1', [id]);
+ }
+
+ if (result.rows.length ===0) return res.status(404).json({ error: 'Professional not found' });
+
+ // Parse JSON fields
+ const profile = result.rows[0];
+ if (profile.certificates && typeof profile.certificates === 'string') {
+ try {
+ profile.certificates = JSON.parse(profile.certificates);
+ } catch (e) {
+ profile.certificates = [];
+ }
+ }
+ // normalize certificates to objects { name, file }
+ if (Array.isArray(profile.certificates)) {
+ profile.certificates = profile.certificates.map((c) => {
+ if (!c) return null;
+ if (typeof c === 'string') return { name: path.basename(c), file: c };
+ if (typeof c === 'object' && c.file) return c;
+ return null;
+ }).filter(Boolean);
+ }
+
+ if (profile.hospitals && typeof profile.hospitals === 'string') {
+ try {
+ profile.hospitals = JSON.parse(profile.hospitals);
+ } catch (e) {
+ profile.hospitals = [];
+ }
+ }
+ if (profile.price_range && typeof profile.price_range === 'string') {
+ try {
+ profile.price_range = JSON.parse(profile.price_range);
+ } catch (e) {
+ profile.price_range = null;
+ }
+ }
+
+ res.json(profile);
+ } catch (error) {
+ res.status(500).json({ error: error.message });
+ }
 });
 
 // Create professional (supports file upload for background check PDF and multiple certificates)
@@ -318,131 +351,150 @@ router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, 
 
 // Update professional - with file upload support
 router.put('/update', authenticateToken, upload.fields([
-  { name: 'profilePhoto', maxCount: 1 },
-  { name: 'background_check_file', maxCount: 1 },
-  { name: 'certificates', maxCount: 10 }
+ { name: 'profilePhoto', maxCount:1 },
+ { name: 'background_check_file', maxCount:1 },
+ { name: 'certificates', maxCount:10 },
+ { name: 'video', maxCount:1 }
 ]), async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const updates = req.body;
-    const files = req.files || {};
+ try {
+ const userId = req.user.id;
+ const updates = req.body;
+ const files = req.files || {};
 
-    // Build dynamic update query
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
+ // Build dynamic update query
+ const fields = [];
+ const values = [];
+ let paramIndex =1;
 
-    // Handle file uploads
-    if (files.profilePhoto && files.profilePhoto[0]) {
-      fields.push(`profile_image = $${paramIndex}`);
-      values.push(`/uploads/${files.profilePhoto[0].filename}`);
-      paramIndex++;
-    }
+ // Handle file uploads
+ if (files.profilePhoto && files.profilePhoto[0]) {
+ fields.push(`profile_image = $${paramIndex}`);
+ values.push(`/uploads/${files.profilePhoto[0].filename}`);
+ paramIndex++;
+ }
 
-    if (files.background_check_file && files.background_check_file[0]) {
-      fields.push(`background_check_file = $${paramIndex}`);
-      values.push(`/uploads/${files.background_check_file[0].filename}`);
-      paramIndex++;
-    }
+ if (files.background_check_file && files.background_check_file[0]) {
+ fields.push(`background_check_file = $${paramIndex}`);
+ values.push(`/uploads/${files.background_check_file[0].filename}`);
+ paramIndex++;
+ }
 
-    if (files.certificates && files.certificates.length > 0) {
-      // Get existing certificates
-      const currentQuery = await pool.query('SELECT certificates FROM professionals WHERE user_id = $1', [userId]);
-      let existingCerts = [];
-      if (currentQuery.rows[0]?.certificates) {
-        try {
-          existingCerts = typeof currentQuery.rows[0].certificates === 'string' 
-            ? JSON.parse(currentQuery.rows[0].certificates) 
-            : currentQuery.rows[0].certificates;
-        } catch (e) {
-          existingCerts = [];
-        }
-      }
-      
-      // Add new certificates
-      const newCerts = files.certificates.map(f => ({
-        name: f.originalname,
-        file: `/uploads/${f.filename}`
-      }));
-      
-      const allCerts = [...existingCerts, ...newCerts];
-      
-      fields.push(`certificates = $${paramIndex}`);
-      values.push(JSON.stringify(allCerts));
-      paramIndex++;
-    }
+ if (files.certificates && files.certificates.length >0) {
+ // Get existing certificates
+ const currentQuery = await pool.query('SELECT certificates FROM professionals WHERE user_id = $1', [userId]);
+ let existingCerts = [];
+ if (currentQuery.rows[0]?.certificates) {
+ try {
+ existingCerts = typeof currentQuery.rows[0].certificates === 'string'
+ ? JSON.parse(currentQuery.rows[0].certificates)
+ : currentQuery.rows[0].certificates;
+ } catch (e) {
+ existingCerts = [];
+ }
+ }
+ // Add new certificates
+ const newCerts = files.certificates.map(f => ({
+ name: f.originalname,
+ file: `/uploads/${f.filename}`
+ }));
+ const allCerts = [...existingCerts, ...newCerts];
+ fields.push(`certificates = $${paramIndex}`);
+ values.push(JSON.stringify(allCerts));
+ paramIndex++;
+ }
 
-    // Map form fields to database columns
-    const fieldMapping = {
-      bio: 'bio',
-      serviceArea: 'service_area',
-      serviceRadius: 'service_radius',
-      hospitals: 'hospitals',
-      priceMin: 'price_range',
-      priceMax: 'price_range',
-      birthDate: 'birth_date'
-    };
+ // Novo: upload de vídeo de apresentação
+ if (files.video && files.video[0]) {
+ fields.push(`video_url = $${paramIndex}`);
+ values.push(`/uploads/${files.video[0].filename}`);
+ paramIndex++;
+ }
 
-    // Get current professional data for merging
-    const currentQuery = await pool.query('SELECT price_range FROM professionals WHERE user_id = $1', [userId]);
-    const currentData = currentQuery.rows[0] || {};
-    let currentPriceRange = currentData.price_range || {};
-    if (typeof currentPriceRange === 'string') {
-      try {
-        currentPriceRange = JSON.parse(currentPriceRange);
-      } catch (e) {
-        currentPriceRange = {};
-      }
-    }
+ // Map form fields to database columns
+ const fieldMapping = {
+ bio: 'bio',
+ serviceArea: 'service_area',
+ serviceRadius: 'service_radius',
+ hospitals: 'hospitals',
+ priceMin: 'price_range',
+ priceMax: 'price_range',
+ birthDate: 'birth_date',
+ city: 'city',
+ state: 'state',
+ whatsapp: 'whatsapp',
+ profession: 'profession',
+ sex: 'sex',
+ region: 'region'
+ };
 
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined && value !== null && value !== '') {
-        const dbField = fieldMapping[key];
-        if (dbField) {
-          if (key === 'priceMin' || key === 'priceMax') {
-            // Handle price range as JSON - only update if both values are provided
-            if (!fields.some(f => f.startsWith('price_range'))) {
-              // Update only the provided values
-              if (updates.priceMin !== undefined && updates.priceMin !== '') {
-                currentPriceRange.min = parseFloat(updates.priceMin);
-              }
-              if (updates.priceMax !== undefined && updates.priceMax !== '') {
-                currentPriceRange.max = parseFloat(updates.priceMax);
-              }
+ // Get current professional data for merging
+ const currentQuery = await pool.query('SELECT price_range FROM professionals WHERE user_id = $1', [userId]);
+ const currentData = currentQuery.rows[0] || {};
+ let currentPriceRange = currentData.price_range || {};
+ if (typeof currentPriceRange === 'string') {
+ try {
+ currentPriceRange = JSON.parse(currentPriceRange);
+ } catch (e) {
+ currentPriceRange = {};
+ }
+ }
 
-              fields.push('price_range = $' + paramIndex);
-              values.push(JSON.stringify(currentPriceRange));
-              paramIndex++;
-            }
-          } else if (key === 'hospitals') {
-            // Handle hospitals as JSON array
-            fields.push(dbField + ' = $' + paramIndex);
-            const hospitalsArray = typeof value === 'string' ? value.split(',').map(h => h.trim()) : value;
-            values.push(JSON.stringify(hospitalsArray));
-            paramIndex++;
-          } else {
-            fields.push(dbField + ' = $' + paramIndex);
-            values.push(value);
-            paramIndex++;
-          }
-        }
-      }
-    }
+ for (const [key, value] of Object.entries(updates)) {
+ if (value !== undefined && value !== null && value !== '') {
+ const dbField = fieldMapping[key];
+ if dbField) {
+ if (key === 'priceMin' || key === 'priceMax') {
+ if (!fields.some(f => f.startsWith('price_range'))) {
+ if (updates.priceMin !== undefined && updates.priceMin !== '') {
+ currentPriceRange.min = parseFloat(updates.priceMin);
+ }
+ if (updates.priceMax !== undefined && updates.priceMax !== '') {
+ currentPriceRange.max = parseFloat(updates.priceMax);
+ }
+ fields.push('price_range = $' + paramIndex);
+ values.push(JSON.stringify(currentPriceRange));
+ paramIndex++;
+ }
+ } else if (key === 'hospitals') {
+ fields.push(dbField + ' = $' + paramIndex);
+ const hospitalsArray = typeof value === 'string' ? value.split(',').map(h => h.trim()) : value;
+ values.push(JSON.stringify(hospitalsArray));
+ paramIndex++;
+ } else {
+ fields.push(dbField + ' = $' + paramIndex);
+ values.push(value);
+ paramIndex++;
+ }
+ }
+ }
+ }
 
-    if (fields.length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
-    }
+ // Se serviceArea foi enviado, atualize city/state também
+ if (updates.serviceArea) {
+ fields.push(`city = $${paramIndex}`);
+ values.push(updates.serviceArea);
+ paramIndex++;
+ if (updates.state) {
+ fields.push(`state = $${paramIndex}`);
+ values.push(updates.state);
+ paramIndex++;
+ }
+ }
 
-    values.push(userId);
-    const query = `UPDATE professionals SET ${fields.join(', ')} WHERE user_id = $${paramIndex} RETURNING *`;
+ if (fields.length ===0) {
+ return res.status(400).json({ error: 'No fields to update' });
+ }
 
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Professional not found' });
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Update professional error:', error);
-    res.status(500).json({ error: error.message });
-  }
+ values.push(userId);
+ const query = `UPDATE professionals SET ${fields.join(', ')} WHERE user_id = $${paramIndex} RETURNING *`;
+
+ const result = await pool.query(query, values);
+ if (result.rows.length ===0) return res.status(404).json({ error: 'Professional not found' });
+ res.json(result.rows[0]);
+ } catch (error) {
+ console.error('Update professional error:', error);
+ res.status(500).json({ error: error.message });
+ }
 });
 
 // Delete professional

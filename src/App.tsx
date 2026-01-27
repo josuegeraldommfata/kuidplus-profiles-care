@@ -40,8 +40,9 @@ const App = () => {
               <Route path="/cadastro-contratante" element={<CadastroContratante />} />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
               <Route path="/buscar" element={<Buscar />} />
+              <Route path="/profissional/me" element={<PerfilProfissional />} />
               <Route path="/profissional/:id" element={<PerfilProfissional />} />
-              <Route path="/profissional" element={<DashboardProfissional />} />
+              <Route path="/dashboard-profissional" element={<DashboardProfissional />} />
               <Route path="/admin" element={<DashboardAdmin />} />
               <Route path="/sobre" element={<Sobre />} />
               <Route path="/planos" element={<Planos />} />

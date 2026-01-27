@@ -1,0 +1,238 @@
+﻿const express = require('express');
+const pool = require('../db');
+const { authenticateToken } = require('../middleware/auth');
+
+const router = express.Router();
+
+// Get conversations for the authenticated user
+router.get('/conversations', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let query, params;
+
+    if (userRole === 'profissional') {
+      // Get conversations where user is the professional
+      query = `
+        SELECT
+          c.id,
+          c.client_id,
+          c.professional_id,
+          c.status,
+          c.last_message_at,
+          c.created_at,
+          u.name as client_name,
+          u.profile_image as client_image,
+          m.content as last_message,
+          m.sender_id as last_sender_id,
+          (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false) as unread_count
+        FROM conversations c
+        JOIN users u ON c.client_id = u.id
+        LEFT JOIN messages m ON m.id = (
+          SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1
+        )
+        WHERE c.professional_id = $1 AND c.status = 'active'
+        ORDER BY c.last_message_at DESC
+      `;
+      params = [userId];
+    } else {
+      // Get conversations where user is the client
+      query = `
+        SELECT
+          c.id,
+          c.client_id,
+          c.professional_id,
+          c.status,
+          c.last_message_at,
+          c.created_at,
+          p.name as professional_name,
+          p.profession,
+          p.profile_image as professional_image,
+          m.content as last_message,
+          m.sender_id as last_sender_id,
+          (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false) as unread_count
+        FROM conversations c
+        JOIN professionals p ON c.professional_id = p.user_id
+        LEFT JOIN messages m ON m.id = (
+          SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1
+        )
+        WHERE c.client_id = $1 AND c.status = 'active'
+        ORDER BY c.last_message_at DESC
+      `;
+      params = [userId];
+    }
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({ error: 'Erro ao buscar conversas' });
+  }
+});
+
+// Get messages for a specific conversation
+router.get('/conversations/:conversationId/messages', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.id;
+
+    // Verify user has access to this conversation
+    const conversationCheck = await pool.query(
+      'SELECT * FROM conversations WHERE id = $1 AND (client_id = $2 OR professional_id = $2)',
+      [conversationId, userId]
+    );
+
+    if (conversationCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Acesso negado a esta conversa' });
+    }
+
+    // Get messages
+    const messages = await pool.query(
+      `SELECT
+        m.id,
+        m.content,
+        m.message_type,
+        m.is_read,
+        m.created_at,
+        m.sender_id,
+        u.name as sender_name,
+        u.profile_image as sender_image,
+        u.role as sender_role
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.conversation_id = $1
+      ORDER BY m.created_at ASC`,
+      [conversationId]
+    );
+
+    // Mark messages as read (only for messages not sent by the current user)
+    await pool.query(
+      'UPDATE messages SET is_read = true, read_at = CURRENT_TIMESTAMP WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false',
+      [conversationId, userId]
+    );
+
+    res.json(messages.rows);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Erro ao buscar mensagens' });
+  }
+});
+
+// Start a new conversation or get existing one
+router.post('/conversations', authenticateToken, async (req, res) => {
+  try {
+    const { professionalId } = req.body;
+    const clientId = req.user.id;
+
+    if (req.user.role !== 'contratante') {
+      return res.status(403).json({ error: 'Apenas contratantes podem iniciar conversas' });
+    }
+
+    // Check if conversation already exists
+    const existing = await pool.query(
+      'SELECT * FROM conversations WHERE client_id = $1 AND professional_id = $2',
+      [clientId, professionalId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json(existing.rows[0]);
+    }
+
+    // Create new conversation
+    const result = await pool.query(
+      'INSERT INTO conversations (client_id, professional_id) VALUES ($1, $2) RETURNING *',
+      [clientId, professionalId]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    res.status(500).json({ error: 'Erro ao criar conversa' });
+  }
+});
+
+// Send a message
+router.post('/conversations/:conversationId/messages', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { content, messageType = 'text' } = req.body;
+    const senderId = req.user.id;
+
+    // Verify user has access to this conversation
+    const conversationCheck = await pool.query(
+      'SELECT * FROM conversations WHERE id = $1 AND (client_id = $2 OR professional_id = $2)',
+      [conversationId, senderId]
+    );
+
+    if (conversationCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Acesso negado a esta conversa' });
+    }
+
+    // Insert message
+    const messageResult = await pool.query(
+      'INSERT INTO messages (conversation_id, sender_id, content, message_type) VALUES ($1, $2, $3, $4) RETURNING *',
+      [conversationId, senderId, content, messageType]
+    );
+
+    // Update conversation's last_message_at
+    await pool.query(
+      'UPDATE conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [conversationId]
+    );
+
+    // Get the full message with sender info
+    const fullMessage = await pool.query(
+      `SELECT
+        m.id,
+        m.content,
+        m.message_type,
+        m.is_read,
+        m.created_at,
+        m.sender_id,
+        u.name as sender_name,
+        u.profile_image as sender_image,
+        u.role as sender_role
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.id = $1`,
+      [messageResult.rows[0].id]
+    );
+
+    res.status(201).json(fullMessage.rows[0]);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Erro ao enviar mensagem' });
+  }
+});
+
+// Mark messages as read
+router.put('/conversations/:conversationId/read', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.id;
+
+    // Verify user has access to this conversation
+    const conversationCheck = await pool.query(
+      'SELECT * FROM conversations WHERE id = $1 AND (client_id = $2 OR professional_id = $2)',
+      [conversationId, userId]
+    );
+
+    if (conversationCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Acesso negado a esta conversa' });
+    }
+
+    // Mark messages as read
+    await pool.query(
+      'UPDATE messages SET is_read = true, read_at = CURRENT_TIMESTAMP WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false',
+      [conversationId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Erro ao marcar mensagens como lidas' });
+  }
+});
+
+module.exports = router;

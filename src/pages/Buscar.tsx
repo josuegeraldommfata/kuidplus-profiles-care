@@ -308,6 +308,22 @@ export default function Buscar() {
     pageNumbers = [1];
   }
 
+  // Corrigir foto de perfil para usar professional.profile_image
+  // Adicionar filtro automático por cidade do usuário logado (contratante)
+
+  useEffect(() => {
+    // Se usuário logado for contratante e não filtrou cidade, filtrar por cidade do usuário
+    if (
+      isAuthenticated &&
+      currentUser?.role === 'contratante' &&
+      currentUser?.cidade &&
+      !filters.city
+    ) {
+      setFilters((f) => ({ ...f, city: currentUser.cidade }));
+    }
+    // eslint-disable-next-line
+  }, [isAuthenticated, currentUser]);
+
   return (
     <Layout>
       <div className="min-h-screen bg-muted/30">
@@ -432,7 +448,7 @@ export default function Buscar() {
                           >
                             <div className="aspect-square relative overflow-hidden">
                               <img
-                                src={professional.profileImage}
+                                src={professional.profile_image}
                                 alt={professional.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
@@ -556,7 +572,7 @@ export default function Buscar() {
                           >
                             <div className="aspect-square relative overflow-hidden">
                               <img
-                                src={professional.profileImage}
+                                src={professional.profile_image}
                                 alt={getDisplayName(professional.name, professional.isHighlighted)}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />

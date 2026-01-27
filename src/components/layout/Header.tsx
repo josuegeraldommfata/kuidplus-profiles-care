@@ -19,30 +19,23 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getDashboardPath = () => {
-    if (!user) return '/';
-    switch (user.role) {
-      case 'cuidador':
-      case 'acompanhante':
-      case 'enfermeiro':
-      case 'tecnico':
-        return '/profissional';
-      case 'contratante':
-        return '/buscar';
-      case 'admin':
-        return '/admin';
-      default:
-        return '/';
+    if (!user || !user.role) return '/';
+    if (user.role === 'profissional' || user.role === 'enfermeiro' || user.role === 'tecnico') {
+      return '/dashboard-profissional';
     }
-  };
-
-  const isProfessionalRole = (role: string) => {
-    return ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(role);
+    if (user.role === 'contratante') {
+      return '/buscar';
+    }
+    if (user.role === 'admin') {
+      return '/dashboard-admin';
+    }
+    return '/';
   };
 
   const getProfilePath = () => {
     if (!user) return '/';
-    if (isProfessionalRole(user.role)) {
-      return '/profissional/me';
+    if (user.role === 'profissional' || user.role === 'enfermeiro' || user.role === 'tecnico') {
+      return `/profissional/${user.id}`;
     }
     return getDashboardPath();
   };
@@ -136,7 +129,7 @@ export function Header() {
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(getDashboardPath())}>
+                <DropdownMenuItem onClick={() => navigate(getProfilePath())}>
                   <User className="mr-2 h-4 w-4" />
                   Meu Perfil
                 </DropdownMenuItem>
@@ -231,7 +224,7 @@ export function Header() {
                 </div>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full mb-2"
                   onClick={() => {
                     navigate(getDashboardPath());
                     setMobileMenuOpen(false);
@@ -239,6 +232,17 @@ export function Header() {
                 >
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    navigate(getProfilePath());
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Meu Perfil
                 </Button>
                 <Button
                   variant="ghost"
