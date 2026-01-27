@@ -50,13 +50,68 @@ import {
   User,
 } from 'lucide-react';
 
+// Normaliza dados do backend (snake_case) para frontend (camelCase)
+const normalizeProfessional = (p: any) => {
+  if (!p) return null;
+  
+  // Helper para URLs de arquivos
+  const getFileUrl = (path: string | null | undefined): string => {
+    if (!path) return '/placeholder.svg';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  return {
+    ...p,
+    id: p.id,
+    userId: p.user_id || p.userId,
+    name: p.name,
+    birthDate: p.birth_date || p.birthDate,
+    sex: p.sex,
+    city: p.city,
+    state: p.state,
+    region: p.region,
+    whatsapp: p.whatsapp,
+    email: p.email,
+    profession: p.profession,
+    profileImage: getFileUrl(p.profile_image || p.profileImage),
+    videoUrl: p.video_url || p.videoUrl ? getFileUrl(p.video_url || p.videoUrl) : undefined,
+    bio: p.bio || '',
+    experienceYears: p.experience_years || p.experienceYears || 0,
+    courses: p.courses || [],
+    certificates: (p.certificates || []).map((c: any) => ({
+      ...c,
+      file: c.file ? getFileUrl(c.file) : undefined,
+    })),
+    serviceArea: p.service_area || p.serviceArea,
+    serviceRadius: p.service_radius || p.serviceRadius,
+    hospitals: p.hospitals || [],
+    availability: p.availability,
+    priceRange: p.price_range || p.priceRange || { min: 0, max: 0 },
+    rating: p.rating || 0,
+    totalRatings: p.total_ratings || p.totalRatings || 0,
+    status: p.status,
+    backgroundCheck: p.background_check || p.backgroundCheck,
+    whatsappClicks: p.whatsapp_clicks || p.whatsappClicks || 0,
+    weeklyViews: p.weekly_views || p.weeklyViews || 0,
+    createdAt: p.created_at || p.createdAt,
+    isHighlighted: p.is_highlighted || p.isHighlighted || false,
+    highlightPhrase: p.highlight_phrase || p.highlightPhrase,
+    references: p.references || [],
+    trialEndsAt: p.trial_ends_at || p.trialEndsAt,
+    corem: p.corem,
+    backgroundCheckFile: p.background_check_file || p.backgroundCheckFile ? getFileUrl(p.background_check_file || p.backgroundCheckFile) : undefined,
+    backgroundCheckNotes: p.background_check_notes || p.backgroundCheckNotes,
+  };
+};
+
 export default function PerfilProfissional() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [professional, setProfessional] = useState(null);
+  const [professional, setProfessional] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -65,7 +120,7 @@ export default function PerfilProfissional() {
         setLoading(true);
         const endpoint = id === 'me' ? '/api/professionals/me/profile' : `/api/professionals/${id}`;
         const response = await api.get(endpoint);
-        setProfessional(response.data);
+        setProfessional(normalizeProfessional(response.data));
       } catch (err) {
         console.error('Error fetching professional:', err);
         setError('Profissional não encontrado');
@@ -149,7 +204,7 @@ export default function PerfilProfissional() {
                 <div className="md:flex">
                   <div className="md:w-64 md:shrink-0 relative">
                     <img
-                      src={professional.profile_image ? professional.profile_image : '/placeholder.svg'}
+                      src={professional.profileImage || '/placeholder.svg'}
                       alt={displayName}
                       className="w-full h-64 md:h-full object-cover"
                     />
@@ -161,15 +216,15 @@ export default function PerfilProfissional() {
                         </Badge>
                       </div>
                     )}
-                    {professional.video_url && (
-                      <div className="my-4">
-                        <video controls width="100%" style={{ maxWidth:400 }}>
-                          <source src={professional.video_url} type="video/mp4" />
-                          Seu navegador não suporta vídeo.
-                        </video>
-                      </div>
-                    )}
                   </div>
+                  {professional.videoUrl && (
+                    <div className="p-4">
+                      <video controls width="100%" style={{ maxWidth: 400, borderRadius: 8 }}>
+                        <source src={professional.videoUrl} type="video/mp4" />
+                        Seu navegador não suporta vídeo.
+                      </video>
+                    </div>
+                  )}
                   <CardContent className="p-6 flex-1">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
@@ -443,7 +498,7 @@ export default function PerfilProfissional() {
                       <span className="text-sm">Verificação pendente</span>
                     </div>
                   )}
-                  {professional.backgroundCheckFile ? (
+                  {professional.backgroundCheckFile && (
                     <div className="mt-3">
                       <a
                         href={professional.backgroundCheckFile}
@@ -454,7 +509,7 @@ export default function PerfilProfissional() {
                         Ver documento de antecedentes (PDF)
                       </a>
                     </div>
-                  ) : null}
+                  )}
                 </CardContent>
               </Card>
 
