@@ -22,6 +22,61 @@ import {
 import { useRef, useState, useEffect } from 'react';
 import api from '@/lib/api';
 
+// Normaliza dados do backend (snake_case) para frontend (camelCase)
+const normalizeProfessional = (p: any): Professional => {
+  if (!p) return p;
+  
+  // Helper para URLs de arquivos
+  const getFileUrl = (path: string | null | undefined): string => {
+    if (!path) return '/placeholder.svg';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  return {
+    ...p,
+    id: p.id,
+    userId: p.user_id || p.userId,
+    name: p.name,
+    birthDate: p.birth_date || p.birthDate,
+    sex: p.sex,
+    city: p.city,
+    state: p.state,
+    region: p.region,
+    whatsapp: p.whatsapp,
+    email: p.email,
+    profession: p.profession,
+    profileImage: getFileUrl(p.profile_image || p.profileImage),
+    videoUrl: p.video_url || p.videoUrl ? getFileUrl(p.video_url || p.videoUrl) : undefined,
+    bio: p.bio,
+    experienceYears: p.experience_years || p.experienceYears,
+    courses: p.courses || [],
+    certificates: (p.certificates || []).map((c: any) => ({
+      ...c,
+      file: c.file ? getFileUrl(c.file) : undefined,
+    })),
+    serviceArea: p.service_area || p.serviceArea,
+    serviceRadius: p.service_radius || p.serviceRadius,
+    hospitals: p.hospitals || [],
+    availability: p.availability,
+    priceRange: p.price_range || p.priceRange || { min: 0, max: 0 },
+    rating: p.rating || 0,
+    totalRatings: p.total_ratings || p.totalRatings || 0,
+    status: p.status,
+    backgroundCheck: p.background_check || p.backgroundCheck,
+    whatsappClicks: p.whatsapp_clicks || p.whatsappClicks || 0,
+    weeklyViews: p.weekly_views || p.weeklyViews || 0,
+    createdAt: p.created_at || p.createdAt,
+    isHighlighted: p.is_highlighted || p.isHighlighted || false,
+    highlightPhrase: p.highlight_phrase || p.highlightPhrase,
+    references: p.references || [],
+    trialEndsAt: p.trial_ends_at || p.trialEndsAt,
+    corem: p.corem,
+    backgroundCheckFile: p.background_check_file || p.backgroundCheckFile ? getFileUrl(p.background_check_file || p.backgroundCheckFile) : undefined,
+    backgroundCheckNotes: p.background_check_notes || p.backgroundCheckNotes,
+  } as Professional;
+};
+
 const Index = () => {
   const navigate = useNavigate();
 
@@ -37,12 +92,16 @@ const Index = () => {
         const hl = await api.get('/api/professionals', { params: { highlighted: true, limit: 5 } });
         const fe = await api.get('/api/professionals', { params: { highlighted: false, limit: 5 } });
 
-        const hlItems = Array.isArray(hl.data) ? hl.data : Array.isArray(hl.data?.items) ? hl.data.items : [];
-        const feItems = Array.isArray(fe.data) ? fe.data : Array.isArray(fe.data?.items) ? fe.data.items : [];
+        const hlItemsRaw = Array.isArray(hl.data) ? hl.data : Array.isArray(hl.data?.items) ? hl.data.items : [];
+        const feItemsRaw = Array.isArray(fe.data) ? fe.data : Array.isArray(fe.data?.items) ? fe.data.items : [];
+
+        // Normalize all items
+        const hlItems = hlItemsRaw.map(normalizeProfessional).filter((p: Professional) => p && p.name);
+        const feItems = feItemsRaw.map(normalizeProfessional).filter((p: Professional) => p && p.name);
 
         if (!cancelled) {
-          setHighlightedProfessionals(hlItems as Professional[]);
-          setFeaturedProfessionals(feItems as Professional[]);
+          setHighlightedProfessionals(hlItems);
+          setFeaturedProfessionals(feItems);
         }
       } catch (err) {
         console.warn('Failed to load home professionals', err);

@@ -34,6 +34,61 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
+// Normaliza dados do backend (snake_case) para frontend (camelCase)
+const normalizeProfessional = (p: any): Professional => {
+  if (!p) return p;
+  
+  // Helper para URLs de arquivos
+  const getFileUrl = (path: string | null | undefined): string => {
+    if (!path) return '/placeholder.svg';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  return {
+    ...p,
+    id: p.id,
+    userId: p.user_id || p.userId,
+    name: p.name,
+    birthDate: p.birth_date || p.birthDate,
+    sex: p.sex,
+    city: p.city,
+    state: p.state,
+    region: p.region,
+    whatsapp: p.whatsapp,
+    email: p.email,
+    profession: p.profession,
+    profileImage: getFileUrl(p.profile_image || p.profileImage),
+    videoUrl: p.video_url || p.videoUrl ? getFileUrl(p.video_url || p.videoUrl) : undefined,
+    bio: p.bio,
+    experienceYears: p.experience_years || p.experienceYears,
+    courses: p.courses || [],
+    certificates: (p.certificates || []).map((c: any) => ({
+      ...c,
+      file: c.file ? getFileUrl(c.file) : undefined,
+    })),
+    serviceArea: p.service_area || p.serviceArea,
+    serviceRadius: p.service_radius || p.serviceRadius,
+    hospitals: p.hospitals || [],
+    availability: p.availability,
+    priceRange: p.price_range || p.priceRange || { min: 0, max: 0 },
+    rating: p.rating || 0,
+    totalRatings: p.total_ratings || p.totalRatings || 0,
+    status: p.status,
+    backgroundCheck: p.background_check || p.backgroundCheck,
+    whatsappClicks: p.whatsapp_clicks || p.whatsappClicks || 0,
+    weeklyViews: p.weekly_views || p.weeklyViews || 0,
+    createdAt: p.created_at || p.createdAt,
+    isHighlighted: p.is_highlighted || p.isHighlighted || false,
+    highlightPhrase: p.highlight_phrase || p.highlightPhrase,
+    references: p.references || [],
+    trialEndsAt: p.trial_ends_at || p.trialEndsAt,
+    corem: p.corem,
+    backgroundCheckFile: p.background_check_file || p.backgroundCheckFile ? getFileUrl(p.background_check_file || p.backgroundCheckFile) : undefined,
+    backgroundCheckNotes: p.background_check_notes || p.backgroundCheckNotes,
+  } as Professional;
+};
+
 export default function Buscar() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -94,9 +149,11 @@ export default function Buscar() {
             ? hlData
             : [];
           const hlItems = Array.isArray(hlItemsRaw) ? hlItemsRaw : [hlItemsRaw].filter(Boolean);
-          // Filter out highlighted professionals with invalid names
-          const validHlItems = hlItems.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
-          setHighlightedProfessionals(validHlItems as Professional[]);
+          // Normalize and filter out professionals with invalid names
+          const validHlItems = hlItems
+            .map(normalizeProfessional)
+            .filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          setHighlightedProfessionals(validHlItems);
         }
 
         // Regular (server-side paged)
@@ -106,10 +163,12 @@ export default function Buscar() {
           const data = res.data;
           const itemsRaw = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : data?.items || data || [];
           const items = Array.isArray(itemsRaw) ? itemsRaw : [itemsRaw].filter(Boolean);
-          // Filter out professionals with invalid names
-          const validItems = items.filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
+          // Normalize and filter out professionals with invalid names
+          const validItems = items
+            .map(normalizeProfessional)
+            .filter((item: Professional) => item && typeof item.name === 'string' && item.name.trim());
           const total = typeof data?.total === 'number' ? data.total : parseInt(data?.total || '0', 10) || (Array.isArray(validItems) ? validItems.length : 0);
-          setRegularProfessionals(validItems as Professional[]);
+          setRegularProfessionals(validItems);
           setTotalRegular(total);
         }
       } catch (err) {
@@ -448,7 +507,7 @@ export default function Buscar() {
                           >
                             <div className="aspect-square relative overflow-hidden">
                               <img
-                                src={professional.profileImage || (professional as any).profile_image || '/placeholder.svg'}
+                                src={professional.profileImage || '/placeholder.svg'}
                                 alt={professional.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
@@ -572,7 +631,7 @@ export default function Buscar() {
                           >
                             <div className="aspect-square relative overflow-hidden">
                               <img
-                                src={professional.profileImage || (professional as any).profile_image || '/placeholder.svg'}
+                                src={professional.profileImage || '/placeholder.svg'}
                                 alt={getDisplayName(professional.name, professional.isHighlighted)}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
