@@ -705,7 +705,7 @@ export default function DashboardProfissional() {
                     <Label>Foto de Perfil</Label>
                     <div className="flex items-center gap-4">
                       <img
-                        src={myProfile.profile_image || '/placeholder.svg'}
+                        src={profilePhotoPreview || myProfile.profile_image || '/placeholder.svg'}
                         alt={myProfile.name}
                         className="w-20 h-20 rounded-xl object-cover"
                       />
@@ -757,25 +757,42 @@ export default function DashboardProfissional() {
                     </div>
                   </div>
 
-                  {/* Video Upload - Only for Highlighted */}
-                  {myProfile?.is_highlighted && (
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Play className="w-4 h-4 text-gradient-highlight" />
-                        Vídeo de Apresentação (até 60s)
+                  {/* Video Upload */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Play className="w-4 h-4 text-gradient-highlight" />
+                      Vídeo de Apresentação (até 60s)
+                      {myProfile?.is_highlighted && (
                         <Badge className="gradient-highlight text-white text-[10px] ml-2">Destaque</Badge>
-                      </Label>
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                        <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          Arraste um vídeo ou clique para selecionar
+                      )}
+                    </Label>
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                      {myProfile?.video_url && (
+                        <div className="mb-4">
+                          <video controls width="100%" style={{ maxWidth: 300, borderRadius: 8 }}>
+                            <source src={myProfile.video_url.startsWith('http') ? myProfile.video_url : `https://kuiddmais.com.br${myProfile.video_url}`} type="video/mp4" />
+                            Seu navegador não suporta vídeo.
+                          </video>
+                        </div>
+                      )}
+                      <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Arraste um vídeo ou clique para selecionar
+                      </p>
+                      <Input
+                        type="file"
+                        accept="video/mp4,video/webm,video/mov"
+                        onChange={handleVideoChange}
+                        className="cursor-pointer mt-2"
+                        id="videoUploadTop"
+                      />
+                      {videoFile && (
+                        <p className="text-sm text-success mt-2">
+                          Arquivo selecionado: {videoFile.name}
                         </p>
-                        <Button variant="outline" size="sm" className="mt-2">
-                          Selecionar vídeo
-                        </Button>
-                      </div>
+                      )}
                     </div>
-                  )}
+                  </div>
 
                   {/* Birth Date */}
                   <div className="space-y-2">
@@ -905,14 +922,49 @@ export default function DashboardProfissional() {
                   {/* Certificates Upload */}
                   <div className="space-y-2">
                     <Label>Diplomas e Certificados</Label>
+                    {/* Exibir certificados existentes */}
+                    {myProfile?.certificates && myProfile.certificates.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        {myProfile.certificates.map((cert, index) => {
+                          const fileUrl = cert.file?.startsWith('http') ? cert.file : `https://kuiddmais.com.br${cert.file}`;
+                          const isPdf = cert.file?.toLowerCase().endsWith('.pdf');
+                          return (
+                            <div key={index} className="relative border rounded-lg overflow-hidden group">
+                              {isPdf ? (
+                                <div className="w-full h-24 bg-destructive/10 flex flex-col items-center justify-center">
+                                  <span className="text-destructive text-lg font-bold">PDF</span>
+                                  <span className="text-xs text-muted-foreground truncate px-2 w-full text-center">
+                                    {cert.name || 'Documento'}
+                                  </span>
+                                </div>
+                              ) : (
+                                <img
+                                  src={fileUrl}
+                                  alt={cert.name || 'Certificado'}
+                                  className="w-full h-24 object-cover"
+                                />
+                              )}
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                              >
+                                <Eye className="w-6 h-6 text-white" />
+                              </a>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                       <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground mb-2">
-                        Arraste arquivos PDF ou clique para selecionar
+                        Arraste arquivos (JPG, PNG ou PDF) ou clique para selecionar
                       </p>
                       <Input
                         type="file"
-                        accept="image/png, image/jpeg, image/jpg"
+                        accept="image/png,image/jpeg,image/jpg,application/pdf"
                         multiple
                         onChange={handleCertificatesChange}
                         className="cursor-pointer"
@@ -933,24 +985,6 @@ export default function DashboardProfissional() {
                     </div>
                   </div>
 
-                  {/* Video Upload - Only for Highlighted */}
-                  {myProfile?.is_highlighted && (
-                    <div className="space-y-2">
-                      <Label>Vídeo de Apresentação (MP4)</Label>
-                      <Input
-                        type="file"
-                        accept="video/mp4"
-                        onChange={handleVideoChange}
-                        className="cursor-pointer"
-                        id="video"
-                      />
-                      {videoFile && (
-                        <p className="text-sm text-success mt-2">
-                          Arquivo selecionado: {videoFile.name}
-                        </p>
-                      )}
-                    </div>
-                  )}
 
                   <Button onClick={handleSave} className="w-full sm:w-auto gradient-highlight border-0">
                     <Save className="mr-2 h-4 w-4" />

@@ -20,7 +20,8 @@ export function Header() {
 
   const getDashboardPath = () => {
     if (!user || !user.role) return '/';
-    if (user.role === 'profissional' || user.role === 'enfermeiro' || user.role === 'tecnico') {
+    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante'];
+    if (professionalRoles.includes(user.role)) {
       return '/dashboard-profissional';
     }
     if (user.role === 'contratante') {
@@ -34,7 +35,8 @@ export function Header() {
 
   const getProfilePath = () => {
     if (!user) return '/';
-    if (user.role === 'profissional' || user.role === 'enfermeiro' || user.role === 'tecnico') {
+    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante'];
+    if (professionalRoles.includes(user.role)) {
       return `/profissional/${user.id}`;
     }
     return getDashboardPath();
