@@ -46,6 +46,11 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        family: {
+          DEFAULT: "hsl(var(--family))",
+          foreground: "hsl(var(--family-foreground))",
+          light: "hsl(var(--family-light))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
