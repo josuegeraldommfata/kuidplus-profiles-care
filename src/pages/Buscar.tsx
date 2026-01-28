@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
 import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
+import { ProfileImage } from '@/components/ui/ProfileImage';
 import api from '@/lib/api';
+import { getFileUrl } from '@/lib/utils';
 import { brazilianStates, priceRanges, professionOptions, getDisplayName, Professional } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -37,13 +39,6 @@ import {
 // Normaliza dados do backend (snake_case) para frontend (camelCase)
 const normalizeProfessional = (p: any): Professional => {
   if (!p) return p;
-  
-  // Helper para URLs de arquivos
-  const getFileUrl = (path: string | null | undefined): string => {
-    if (!path) return '/placeholder.svg';
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   return {
     ...p,
@@ -88,6 +83,7 @@ const normalizeProfessional = (p: any): Professional => {
     backgroundCheckNotes: p.background_check_notes || p.backgroundCheckNotes,
   } as Professional;
 };
+
 
 export default function Buscar() {
   const navigate = useNavigate();

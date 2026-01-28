@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/StarRating';
 import api from '@/lib/api';
+import { getFileUrl } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Helper functions
@@ -53,13 +54,6 @@ import {
 // Normaliza dados do backend (snake_case) para frontend (camelCase)
 const normalizeProfessional = (p: any) => {
   if (!p) return null;
-  
-  // Helper para URLs de arquivos
-  const getFileUrl = (path: string | null | undefined): string => {
-    if (!path) return '/placeholder.svg';
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   return {
     ...p,
@@ -116,14 +110,33 @@ export default function PerfilProfissional() {
 
   useEffect(() => {
     const fetchProfessional = async () => {
+      if (!id) {
+        setError('ID do profissional não fornecido');
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
+        setError(null);
         const endpoint = id === 'me' ? '/api/professionals/me/profile' : `/api/professionals/${id}`;
+        console.log('Fetching professional from:', endpoint);
         const response = await api.get(endpoint);
+        console.log('Professional data:', response.data);
+        
+        if (!response.data) {
+          setError('Profissional não encontrado');
+          return;
+        }
+        
         setProfessional(normalizeProfessional(response.data));
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching professional:', err);
-        setError('Profissional não encontrado');
+        if (err.response?.status === 404) {
+          setError('Profissional não encontrado');
+        } else {
+          setError('Erro ao carregar perfil do profissional');
+        }
       } finally {
         setLoading(false);
       }

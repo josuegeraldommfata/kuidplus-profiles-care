@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calculateAge } from '@/data/mockData';
 import { StarRating } from '@/components/ui/StarRating';
 import api from '@/lib/api';
+import { getFileUrl } from '@/lib/utils';
 import {
   User,
   FileEdit,
@@ -544,7 +545,7 @@ export default function DashboardProfissional() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                       <img
-                        src={myProfile.profile_image || '/placeholder.svg'}
+                        src={getFileUrl(myProfile.profile_image)}
                         alt={myProfile.name}
                         className="w-20 h-20 rounded-xl object-cover"
                       />
@@ -675,7 +676,7 @@ export default function DashboardProfissional() {
                                   onClick={() => {
                                     const url = cert.file;
                                     if (url) {
-                                      window.open(url.startsWith('http') ? url : `https://kuiddmais.com.br${url}`, '_blank');
+                                      window.open(getFileUrl(url), '_blank');
                                     }
                                   }}
                                 >
@@ -705,7 +706,7 @@ export default function DashboardProfissional() {
                     <Label>Foto de Perfil</Label>
                     <div className="flex items-center gap-4">
                       <img
-                        src={profilePhotoPreview || myProfile.profile_image || '/placeholder.svg'}
+                        src={profilePhotoPreview?.startsWith('blob:') ? profilePhotoPreview : getFileUrl(profilePhotoPreview || myProfile.profile_image)}
                         alt={myProfile.name}
                         className="w-20 h-20 rounded-xl object-cover"
                       />
@@ -770,7 +771,7 @@ export default function DashboardProfissional() {
                       {myProfile?.video_url && (
                         <div className="mb-4">
                           <video controls width="100%" style={{ maxWidth: 300, borderRadius: 8 }}>
-                            <source src={myProfile.video_url.startsWith('http') ? myProfile.video_url : `https://kuiddmais.com.br${myProfile.video_url}`} type="video/mp4" />
+                            <source src={getFileUrl(myProfile.video_url)} type="video/mp4" />
                             Seu navegador não suporta vídeo.
                           </video>
                         </div>
@@ -926,7 +927,7 @@ export default function DashboardProfissional() {
                     {myProfile?.certificates && myProfile.certificates.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         {myProfile.certificates.map((cert, index) => {
-                          const fileUrl = cert.file?.startsWith('http') ? cert.file : `https://kuiddmais.com.br${cert.file}`;
+                          const fileUrl = getFileUrl(cert.file);
                           const isPdf = cert.file?.toLowerCase().endsWith('.pdf');
                           return (
                             <div key={index} className="relative border rounded-lg overflow-hidden group">
