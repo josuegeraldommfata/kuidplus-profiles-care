@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
 import { StarRating } from '@/components/ui/StarRating';
 import { getDisplayName, Professional } from '@/data/mockData';
+import { getFileUrl } from '@/lib/utils';
 import {
   Search,
   Shield,
@@ -25,13 +26,6 @@ import api from '@/lib/api';
 // Normaliza dados do backend (snake_case) para frontend (camelCase)
 const normalizeProfessional = (p: any): Professional => {
   if (!p) return p;
-  
-  // Helper para URLs de arquivos
-  const getFileUrl = (path: string | null | undefined): string => {
-    if (!path) return '/placeholder.svg';
-    if (path.startsWith('http') || path.startsWith('data:')) return path;
-    return `https://kuiddmais.com.br${path.startsWith('/') ? '' : '/'}${path}`;
-  };
 
   return {
     ...p,
