@@ -39,6 +39,11 @@
  --warning:3892%50%;
  --warning-foreground:00%100%;
 
+ /* Family/Contratante colors (emerald) */
+ --family:16084%39%;
+ --family-foreground:00%100%;
+ --family-light:15284%95%;
+
  --border:18015%90%;
  --input:18015%90%;
  --ring:17462%40%;

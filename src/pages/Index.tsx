@@ -400,30 +400,81 @@ const Index = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-4">
               <Crown className="w-4 h-4" />
-              PLANOS PARA PROFISSIONAIS
+              NOSSOS PLANOS
             </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Destaque seu perfil e <span className="text-gradient-highlight">conquiste mais clientes</span>
+              Escolha o plano ideal para <span className="text-gradient-highlight">você</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Todos os profissionais começam com 7 dias de acesso completo grátis.
-              Após o período de trial, escolha o plano ideal para continuar em destaque.
+              Planos para profissionais e familiares. Todos começam com 7 dias de acesso completo grátis!
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Monthly Plan */}
-            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
-              <CardContent className="p-8">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Contratante (Familiar) Plan */}
+            <Card className="relative overflow-hidden border-2 border-family hover:border-family/80 transition-colors">
+              <div className="absolute top-0 right-0 px-4 py-1 bg-family text-family-foreground text-xs font-medium rounded-bl-lg">
+                PARA FAMÍLIAS
+              </div>
+              <CardContent className="p-6">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-2">Plano Mensal</h3>
+                  <div className="w-12 h-12 rounded-full bg-family-light flex items-center justify-center mx-auto mb-3">
+                    <Heart className="w-6 h-6 text-family" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Contratante</h3>
+                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-family-light rounded-lg p-3 mb-3">
+                    <span className="text-sm text-family font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-family">R$ 29,90</span>
+                  <span className="text-muted-foreground">/semana</span>
+                  <p className="text-xs text-muted-foreground mt-1">Renovação automática semanal</p>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Acesso a todos os perfis',
+                    'Contato direto via WhatsApp',
+                    'Visualizar vídeos de apresentação',
+                    'Ver certificados e diplomas',
+                    'Filtros avançados de busca',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-family flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full bg-family hover:bg-family/90 text-family-foreground border-0"
+                  onClick={() => navigate('/cadastro-contratante')}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  Começar 7 dias grátis
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Plan (Profissionais) */}
+            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Profissional Mensal</h3>
                   <p className="text-muted-foreground text-sm">Flexibilidade total</p>
                 </div>
                 <div className="text-center mb-6">
-                  <span className="text-4xl font-bold text-gradient-highlight">R$ 39,90</span>
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">R$ 39,90</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-6">
                   {[
                     'Perfil em destaque nas buscas',
                     'Selo de verificação',
@@ -447,22 +498,28 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Annual Plan */}
+            {/* Trimestral Plan */}
             <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
               <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
                 MAIS ECONOMIA
               </div>
-              <CardContent className="p-8">
+              <CardContent className="p-6">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-2">Plano Trimestral</h3>
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Crown className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Profissional Trimestral</h3>
                   <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
                 </div>
                 <div className="text-center mb-6">
-                  <span className="text-4xl font-bold text-gradient-highlight">R$ 99,90</span>
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">R$ 99,90</span>
                   <span className="text-muted-foreground">/trimestre</span>
                   <p className="text-sm text-primary font-medium mt-1">Economia de R$ 19,80</p>
                 </div>
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-6">
                   {[
                     'Tudo do plano mensal',
                     'Perfil em destaque nas buscas',
@@ -489,7 +546,7 @@ const Index = () => {
           </div>
 
           <p className="text-center text-muted-foreground text-sm mt-8">
-            ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, assine para continuar com acesso completo.
+            ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, a cobrança é feita automaticamente.
           </p>
         </div>
       </section>
