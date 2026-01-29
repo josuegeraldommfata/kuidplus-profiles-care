@@ -115,7 +115,7 @@ export default function PerfilProfissional() {
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         setError(null);
@@ -123,12 +123,12 @@ export default function PerfilProfissional() {
         console.log('Fetching professional from:', endpoint);
         const response = await api.get(endpoint);
         console.log('Professional data:', response.data);
-        
+
         if (!response.data) {
           setError('Profissional não encontrado');
           return;
         }
-        
+
         setProfessional(normalizeProfessional(response.data));
       } catch (err: any) {
         console.error('Error fetching professional:', err);
@@ -219,7 +219,10 @@ export default function PerfilProfissional() {
                     <img
                       src={professional.profileImage || '/placeholder.svg'}
                       alt={displayName}
-                      className="w-full h-64 md:h-full object-cover"
+                      className="w-full h-64 object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                      }}
                     />
                     {professional.isHighlighted && (
                       <div className="absolute top-3 left-3">

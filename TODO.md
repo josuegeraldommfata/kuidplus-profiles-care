@@ -1,25 +1,9 @@
-# TODO: Corrigir Cadastro e Navegação do Projeto KUID+
+# TODO: Modificar Plano Contratante para Mensal e Reestruturar Página de Planos
 
-## Tarefas Concluídas
-- [x] Identificado problema de inicialização do backend: erro "messageRoutes is not defined"
-- [x] Removido messageRoutes do server.js conforme solicitação do usuário
-- [x] Alterado redirecionamento de login para profissionais de '/profissional' para '/profissional/me'
-- [x] Atualizado botão "Meu Perfil" no Header para navegar para getProfilePath() (/profissional/me para profissionais)
-- [x] Adicionada rota '/profissional/me' no App.tsx
-- [x] Modificado PerfilProfissional.tsx para buscar dados da API em vez de dados mockados
-- [x] Adicionadas funções auxiliares calculateAge e getDisplayName no PerfilProfissional.tsx
-- [x] Corrigido import da API no PerfilProfissional.tsx
-- [x] Corrigido getDashboardPath para incluir 'profissional' no switch case
-- [x] Adicionado botão "Meu Perfil" no menu mobile
+## Tarefas
+- [x] Atualizar src/pages/Index.tsx: Alterar exibição do preço para mensal (/mês) e renovação automática mensal
+- [x] Atualizar src/pages/Planos.tsx: Alterar busca do plano contratante para duration_days === 30, atualizar textos para mensal
+- [ ] Reestruturar src/pages/Planos.tsx: Separar planos profissionais e familiar em seções distintas, com plano familiar abaixo dos profissionais
 
-## Próximos Passos
-- [ ] Reiniciar o backend no VPS (pm2 reload kuidd-backend)
-- [ ] Testar cadastro de profissional para garantir que funciona
-- [ ] Testar redirecionamento de login para perfil (/profissional/me)
-- [ ] Testar botão dashboard redirecionando para /profissional
-
-## Notas
-- Backend estava falhando ao iniciar devido ao problema com messageRoutes
-- Rotas de mensagens removidas conforme solicitação do usuário
-- Alterada navegação para redirecionar login para perfil, botão dashboard para dashboard profissional
-- PerfilProfissional agora usa dados reais da API em vez de mock
+## Status
+- Mudanças iniciais concluídas. Agora reestruturando a página de planos para exibir plano familiar abaixo da seção de profissionais.

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import api from '@/lib/api';
 import { User } from '@/data/mockData';
+import { getFileUrl } from '@/lib/utils';
 
 interface AuthContextType {
   user: User | null;
@@ -21,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const normalizeUser = (u: any) => {
     if (!u) return null;
     const profile_image = (u.profile_image as any) || (u.profileImage as any) || null;
-    return { ...u, profile_image, profileImage: profile_image } as User;
+    return { ...u, profile_image, profileImage: profile_image ? getFileUrl(profile_image) : null } as User;
   };
 
   // Check for existing token on mount
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!prev) return normalizeUser(data as any);
       const merged: any = { ...prev, ...data };
       merged.profile_image = merged.profile_image || merged.profileImage || null;
-      merged.profileImage = merged.profile_image;
+      merged.profileImage = merged.profile_image ? getFileUrl(merged.profile_image) : null;
       return merged as User;
     });
   };

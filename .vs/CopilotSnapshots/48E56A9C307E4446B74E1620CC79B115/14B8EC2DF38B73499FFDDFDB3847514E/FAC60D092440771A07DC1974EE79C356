@@ -1,0 +1,348 @@
+﻿import React from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Layout } from '@/components/layout/Layout';
+import { Check, Sparkles, Crown, Heart, Users } from 'lucide-react';
+
+type Plan = {
+  id: number;
+  name: string;
+  price: number;
+  currency: string;
+  duration_days: number;
+  features?: Record<string, unknown>;
+};
+
+const fetchPlans = async (): Promise<Plan[]> => {
+  try {
+    const res = await api.get('/api/payments/plans');
+    // Ensure we always return an array
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (error) {
+    console.error('Error fetching plans:', error);
+    return [];
+  }
+};
+
+export default function Planos() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: plansData, isLoading } = useQuery({ queryKey: ['plans'], queryFn: fetchPlans });
+
+  // Ensure plans is always an array
+  const plans = Array.isArray(plansData) ? plansData : [];
+
+  const createPref = useMutation({
+    mutationFn: async (vars: { userId: string; planId: number }) => {
+      const res = await api.post('/api/mercadopago/create_preference', vars);
+      return res.data;
+    },
+  });
+
+  // Ensure plans is always an array
+  const plansList = Array.isArray(plans) ? plans : [];
+
+  // Find monthly, trimestral and contratante plans from database
+  const monthlyPlan = plansList.find((p: Plan) =>
+    p.name.toLowerCase().includes('mensal') || p.duration_days === 30
+  );
+  const trimestralPlan = plansList.find((p: Plan) =>
+    p.name.toLowerCase().includes('trimestral') || p.duration_days === 90
+  );
+  const contratantePlan = plansList.find((p: Plan) =>
+    p.name.toLowerCase().includes('contratante') || p.name.toLowerCase().includes('familiar') || p.duration_days === 30
+  );
+
+  // Check if user is a professional
+  const isProfessional = user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(user.role);
+  const isContratante = user && user.role === 'contratante';
+  const buttonText = user ? 'Assinar Agora' : 'Fazer Login para Assinar';
+
+  const handlePlanClick = async (planType: 'mensal' | 'trimestral' | 'contratante') => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/login?redirect=/planos');
+      return;
+    }
+
+    let plan;
+    if (planType === 'mensal') plan = monthlyPlan;
+    else if (planType === 'trimestral') plan = trimestralPlan;
+    else plan = contratantePlan;
+
+    if (!plan) {
+      alert('Plano não encontrado. Por favor, tente novamente.');
+      return;
+    }
+
+    try {
+      const result = await createPref.mutateAsync({ userId: user.id, planId: plan.id });
+      const url = (result && (result.init_point || result.sandbox_init_point)) || (result?.preference?.response?.init_point);
+      if (url) window.location.href = url;
+      else alert('Erro ao criar preferência de pagamento.');
+    } catch (err) {
+      alert('Erro ao iniciar checkout: ' + JSON.stringify(err));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando planos...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      {/* Pricing Section */}
+      <section className="py-16 bg-background">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-4">
+              <Crown className="w-4 h-4" />
+              NOSSOS PLANOS
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Escolha o plano ideal para <span className="text-gradient-highlight">você</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Planos para profissionais e familiares. Todos começam com 7 dias de acesso completo grátis!
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Contratante (Familiar) Plan */}
+            <Card className="relative overflow-hidden border-2 border-family hover:border-family/80 transition-colors">
+              <div className="absolute top-0 right-0 px-4 py-1 bg-family text-family-foreground text-xs font-medium rounded-bl-lg">
+                PARA FAMÍLIAS
+              </div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-family-light flex items-center justify-center mx-auto mb-3">
+                    <Heart className="w-6 h-6 text-family" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Contratante</h3>
+                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-family-light rounded-lg p-3 mb-3">
+                    <span className="text-sm text-family font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-family">
+                    {contratantePlan ? `R$ ${contratantePlan.price.toFixed(2).replace('.', ',')}` : 'R$ 29,90'}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                  <p className="text-xs text-muted-foreground mt-1">Renovação automática mensal</p>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Acesso a todos os perfis',
+                    'Contato direto via WhatsApp',
+                    'Visualizar vídeos de apresentação',
+                    'Ver certificados e diplomas',
+                    'Filtros avançados de busca',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-family flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full bg-family hover:bg-family/90 text-family-foreground border-0"
+                  onClick={() => isContratante ? handlePlanClick('contratante') : navigate('/cadastro-contratante')}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  {isContratante ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Plan */}
+            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Users className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Profissional Mensal</h3>
+                  <p className="text-muted-foreground text-sm">Flexibilidade total</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">
+                    {monthlyPlan ? `R$ ${monthlyPlan.price.toFixed(2).replace('.', ',')}` : 'R$ 39,90'}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Perfil em destaque nas buscas',
+                    'Selo de verificação',
+                    'Vídeo de apresentação',
+                    'Referências profissionais',
+                    'Estatísticas de visualização',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => isProfessional ? handlePlanClick('mensal') : navigate('/cadastro?plano=mensal')}
+                  disabled={isProfessional && !monthlyPlan}
+                >
+                  {isProfessional && <Crown className="mr-2 h-4 w-4" />}
+                  {isProfessional ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Trimestral Plan */}
+            <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
+              <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
+                MAIS ECONOMIA
+              </div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Crown className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Profissional Trimestral</h3>
+                  <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">
+                    {trimestralPlan ? `R$ ${trimestralPlan.price.toFixed(2).replace('.', ',')}` : 'R$ 99,90'}
+                  </span>
+                  <span className="text-muted-foreground">/trimestre</span>
+                  {trimestralPlan && (
+                    <p className="text-sm text-primary font-medium mt-1">Economia de R$ 19,80</p>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Tudo do plano mensal',
+                    'Perfil em destaque nas buscas',
+                    'Selo de verificação',
+                    'Vídeo de apresentação',
+                    'Referências profissionais',
+                    'Prioridade máxima no ranking',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => isProfessional ? handlePlanClick('trimestral') : navigate('/cadastro?plano=trimestral')}
+                  disabled={isProfessional && !trimestralPlan}
+                >
+                  {isProfessional ? <Crown className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {isProfessional ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="text-center text-muted-foreground text-sm mb-16">
+            ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, a cobrança é feita automaticamente.
+          </p>
+        </div>
+      </section>
+
+      {/* Family Plan Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-family text-family-foreground text-sm font-medium mb-4">
+              <Heart className="w-4 h-4" />
+              PLANO PARA FAMÍLIAS
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Acesso completo para encontrar o cuidador ideal
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Famílias começam com 7 dias de acesso completo grátis. Após o período de trial, continue com acesso mensal.
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            {/* Contratante (Familiar) Plan */}
+            <Card className="relative overflow-hidden border-2 border-family hover:border-family/80 transition-colors">
+              <div className="absolute top-0 right-0 px-4 py-1 bg-family text-family-foreground text-xs font-medium rounded-bl-lg">
+                PARA FAMÍLIAS
+              </div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-family-light flex items-center justify-center mx-auto mb-3">
+                    <Heart className="w-6 h-6 text-family" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Contratante</h3>
+                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-family-light rounded-lg p-3 mb-3">
+                    <span className="text-sm text-family font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-family">
+                    {contratantePlan ? `R$ ${contratantePlan.price.toFixed(2).replace('.', ',')}` : 'R$ 29,90'}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                  <p className="text-xs text-muted-foreground mt-1">Renovação automática mensal</p>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Acesso a todos os perfis',
+                    'Contato direto via WhatsApp',
+                    'Visualizar vídeos de apresentação',
+                    'Ver certificados e diplomas',
+                    'Filtros avançados de busca',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-family flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full bg-family hover:bg-family/90 text-family-foreground border-0"
+                  onClick={() => isContratante ? handlePlanClick('contratante') : navigate('/cadastro-contratante')}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  {isContratante ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="text-center text-muted-foreground text-sm mt-8">
+            ✨ O plano inclui 7 dias de trial grátis. Após o período, a cobrança mensal é feita automaticamente.
+          </p>
+        </div>
+      </section>
+    </Layout>
+  );
+}

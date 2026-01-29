@@ -54,7 +54,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
  storage,
  fileFilter: (req, file, cb) => {
  // Permitir apenas JPG e PNG para foto de perfil e certificados
@@ -261,8 +261,8 @@ router.get('/:id', async (req, res) => {
  }
 });
 
-// Create professional (supports file upload for background check PDF and multiple certificates)
-router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, { name: 'certificates', maxCount: 10 }]), async (req, res) => {
+// Create professional (supports file upload for profile photo, background check PDF and multiple certificates)
+router.post('/', upload.fields([{ name: 'profilePhoto', maxCount: 1 }, { name: 'background_check_file', maxCount: 1 }, { name: 'certificates', maxCount: 10 }]), async (req, res) => {
   try {
     const fields = req.body;
     const files = req.files || {};
@@ -320,6 +320,9 @@ router.post('/', upload.fields([{ name: 'background_check_file', maxCount: 1 }, 
 
     const result = await pool.query(query, values);
 
+    // Sync profile_image to users table (initially null, but will be updated later)
+    await pool.query('UPDATE users SET profile_image = $1 WHERE id = $2', [null, userId]);
+
     // Send confirmation email
     const confirmationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/confirmar-email?token=${confirmationToken}`;
     const mailOptions = {
@@ -368,9 +371,13 @@ router.put('/update', authenticateToken, upload.fields([
 
  // Handle file uploads
  if (files.profilePhoto && files.profilePhoto[0]) {
+ const profileImagePath = `/uploads/${files.profilePhoto[0].filename}`;
  fields.push(`profile_image = $${paramIndex}`);
- values.push(`/uploads/${files.profilePhoto[0].filename}`);
+ values.push(profileImagePath);
  paramIndex++;
+
+ // Sync profile_image to users table
+ await pool.query('UPDATE users SET profile_image = $1 WHERE id = $2', [profileImagePath, userId]);
  }
 
  if (files.background_check_file && files.background_check_file[0]) {
@@ -442,7 +449,7 @@ router.put('/update', authenticateToken, upload.fields([
  for (const [key, value] of Object.entries(updates)) {
  if (value !== undefined && value !== null && value !== '') {
  const dbField = fieldMapping[key];
- if dbField) {
+ if (dbField) {
  if (key === 'priceMin' || key === 'priceMax') {
  if (!fields.some(f => f.startsWith('price_range'))) {
  if (updates.priceMin !== undefined && updates.priceMin !== '') {
@@ -469,17 +476,7 @@ router.put('/update', authenticateToken, upload.fields([
  }
  }
 
- // Se serviceArea foi enviado, atualize city/state também
- if (updates.serviceArea) {
- fields.push(`city = $${paramIndex}`);
- values.push(updates.serviceArea);
- paramIndex++;
- if (updates.state) {
- fields.push(`state = $${paramIndex}`);
- values.push(updates.state);
- paramIndex++;
- }
- }
+
 
  if (fields.length ===0) {
  return res.status(400).json({ error: 'No fields to update' });

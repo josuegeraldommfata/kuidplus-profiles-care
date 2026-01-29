@@ -545,9 +545,12 @@ export default function DashboardProfissional() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                       <img
-                        src={getFileUrl(myProfile.profile_image)}
+                        src={myProfile.profile_image || '/placeholder.svg'}
                         alt={myProfile.name}
                         className="w-20 h-20 rounded-xl object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                        }}
                       />
                       <div>
                         <p className="font-semibold">{myProfile?.name || 'Nome não informado'}</p>
@@ -706,7 +709,11 @@ export default function DashboardProfissional() {
                     <Label>Foto de Perfil</Label>
                     <div className="flex items-center gap-4">
                       <img
-                        src={profilePhotoPreview?.startsWith('blob:') ? profilePhotoPreview : getFileUrl(profilePhotoPreview || myProfile.profile_image)}
+                        src={
+                          profilePhotoPreview
+                            ? profilePhotoPreview
+                            : myProfile.profile_image || '/placeholder.svg'
+                        }
                         alt={myProfile.name}
                         className="w-20 h-20 rounded-xl object-cover"
                       />

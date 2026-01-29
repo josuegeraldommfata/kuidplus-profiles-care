@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,10 +31,9 @@ export default function Login() {
           description: result.message,
         });
 
-        // Pequeno delay para garantir que o contexto foi atualizado
         setTimeout(() => {
-          // Redirect based on role - pega do contexto atualizado ou da resposta
           const userRole = user?.role || (result as any).user?.role;
+
           switch (userRole) {
             case 'enfermeiro':
             case 'tecnico':
@@ -54,15 +53,17 @@ export default function Login() {
       } else {
         toast({
           title: 'Erro no login',
-          description: result.message || 'Erro ao fazer login. Verifique suas credenciais.',
+          description: result.message || 'Verifique suas credenciais.',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('Login error:', error);
       toast({
         title: 'Erro no login',
-        description: (error as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || (error as { message?: string }).message || 'Erro inesperado. Tente novamente.',
+        description:
+          (error as any)?.response?.data?.error ||
+          (error as any)?.message ||
+          'Erro inesperado.',
         variant: 'destructive',
       });
     } finally {
@@ -87,6 +88,7 @@ export default function Login() {
               Acesse sua conta para continuar
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -100,6 +102,7 @@ export default function Login() {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <div className="relative">
@@ -126,6 +129,7 @@ export default function Login() {
                   </Button>
                 </div>
               </div>
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <span className="animate-pulse">Entrando...</span>
@@ -137,74 +141,6 @@ export default function Login() {
                 )}
               </Button>
             </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Não tem conta?
-                  </span>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => navigate('/cadastro')}
-              >
-                Criar conta
-              </Button>
-            </div>
-
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground text-center mb-2">
-                Contas demo (senha: 123456)
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  className="p-2 bg-background rounded hover:bg-accent text-left transition-colors"
-                  onClick={() => {
-                    setEmail('enfermeiro@kuid.com');
-                    setPassword('123456');
-                  }}
-                >
-                  <span className="font-medium text-primary">Enfermeiro</span>
-                </button>
-                <button
-                  type="button"
-                  className="p-2 bg-background rounded hover:bg-accent text-left transition-colors"
-                  onClick={() => {
-                    setEmail('tecnico@kuid.com');
-                    setPassword('123456');
-                  }}
-                >
-                  <span className="font-medium text-primary">Técnico</span>
-                </button>
-                <button
-                  type="button"
-                  className="p-2 bg-background rounded hover:bg-accent text-left transition-colors"
-                  onClick={() => {
-                    setEmail('contratante@kuid.com');
-                    setPassword('123456');
-                  }}
-                >
-                  <span className="font-medium text-primary">Contratante</span>
-                </button>
-                <button
-                  type="button"
-                  className="p-2 bg-background rounded hover:bg-accent text-left transition-colors"
-                  onClick={() => {
-                    setEmail('admin@kuid.com');
-                    setPassword('123456');
-                  }}
-                >
-                  <span className="font-medium text-primary">Admin</span>
-                </button>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

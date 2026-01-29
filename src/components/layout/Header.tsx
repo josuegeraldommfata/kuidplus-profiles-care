@@ -101,7 +101,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
+                    <AvatarImage src={getFileUrl(user?.profileImage)} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.name?.charAt(0)}
                     </AvatarFallback>
@@ -111,7 +111,7 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end">
                 <div className="flex items-center gap-2 p-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
+                    <AvatarImage src={getFileUrl(user?.profileImage)} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.name?.charAt(0)}
                     </AvatarFallback>
@@ -217,7 +217,7 @@ export function Header() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
+                    <AvatarImage src={getFileUrl(user?.profileImage)} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.name?.charAt(0)}
                     </AvatarFallback>

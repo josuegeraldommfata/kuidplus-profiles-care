@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Normaliza dados do backend (snake_case) para frontend (camelCase)
 const normalizeProfessional = (p: any): Professional => {
@@ -73,10 +74,15 @@ const normalizeProfessional = (p: any): Professional => {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Get highlighted professionals first, then others (from backend)
   const [highlightedProfessionals, setHighlightedProfessionals] = useState<Professional[]>([]);
   const [featuredProfessionals, setFeaturedProfessionals] = useState<Professional[]>([]);
+
+  // Plans for home pricing display
+  const [plansList, setPlansList] = useState<any[]>([]);
+  const [contratantePlanApi, setContratantePlanApi] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +108,27 @@ const Index = () => {
       }
     }
 
+    async function fetchPlansHome() {
+      try {
+        const res = await api.get('/api/payments/plans');
+        const list = Array.isArray(res.data) ? res.data : [];
+        if (!cancelled) {
+          setPlansList(list);
+          const cp = list.find((p: any) =>
+            (p.name || '').toString().toLowerCase().includes('contratante') ||
+            (p.name || '').toString().toLowerCase().includes('familiar') ||
+            (p.name || '').toString().toLowerCase().includes('family')
+          );
+          setContratantePlanApi(cp || null);
+          console.log('Home plans:', list, 'contratantePlanApi:', cp);
+        }
+      } catch (err) {
+        console.warn('Failed to load plans for home', err);
+      }
+    }
+
     fetchHomeLists();
+    fetchPlansHome();
     return () => { cancelled = true; };
   }, []);
 
@@ -111,37 +137,38 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="gradient-hero py-16 md:py-24">
-        <div className="container">
-          <div className="max-w-4xl mx-auto text-center animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-6">
+      <section className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
+        <div className="container relative">
+          <div className="max-w-5xl mx-auto text-center animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-medium mb-8 shadow-lg">
               <Sparkles className="w-4 h-4" />
               KUIDD+, MAIS CONFIANÇA PARA ESCOLHER, MAIS OPORTUNIDADE PARA CUIDAR!!
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-balance leading-tight text-gradient-highlight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-balance leading-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Conectando Famílias a Acompanhantes Hospitalares, Cuidadores, Técnicos de Enfermagem e Enfermeiros verificados e de Excelência
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 text-balance">
+            <p className="text-xl md:text-2xl text-slate-600 mb-12 text-balance max-w-3xl mx-auto leading-relaxed">
               A plataforma que facilita o encontro entre famílias e profissionais
               qualificadas de cuidados. Segurança, transparência e qualidade em cada conexão.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Button
                 size="lg"
-                className="text-base px-8 gradient-highlight border-0"
+                className="text-lg px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                 onClick={() => navigate('/buscar')}
               >
-                <Search className="mr-2 h-5 w-5" />
+                <Search className="mr-3 h-6 w-6" />
                 Buscar Profissionais
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="text-base px-8"
+                className="text-lg px-10 py-4 border-2 border-slate-300 hover:border-blue-500 text-slate-700 hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 onClick={() => navigate('/cadastro')}
               >
                 Sou Profissional
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-3 h-6 w-6" />
               </Button>
             </div>
           </div>
@@ -149,74 +176,76 @@ const Index = () => {
       </section>
 
       {/* Video Section - KUID+ Presentation */}
-      <section className="py-12 bg-background">
+      <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                <span className="text-gradient-highlight">Conheça o KUIDD+</span>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Conheça o KUIDD+</span>
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
                 Veja como funciona nossa plataforma e os benefícios para profissionais e famílias
               </p>
             </div>
-            <div className="aspect-video rounded-2xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center relative">
-              {/* video with poster and overlay if browser can't render video frames */}
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover bg-black"
-                controls
-                playsInline
-                autoPlay
-                muted
-                preload="metadata"
-                src="/video/kuidd-plus-web.mp4"
-              >
-                Your browser does not support the video tag.
-              </video>
+            <div className="relative">
+              <div className="aspect-video rounded-3xl overflow-hidden shadow-2xl border border-slate-200/50 bg-white">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  controls
+                  playsInline
+                  autoPlay
+                  muted
+                  preload="metadata"
+                  src="/video/kuidd-plus-web.mp4"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 rounded-3xl -z-10 blur-xl"></div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-20 bg-white">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-            Por que escolher o <span className="text-gradient-highlight">KUIDD+</span>?
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+            Por que escolher o <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">KUIDD+</span>?
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
               {
                 icon: Shield,
                 title: 'Profissionais Verificados',
-                description:
-                  'Todos os profissionais têm antecedentes criminais verificados e documentação conferida.',
+                description: 'Todos os profissionais têm antecedentes criminais verificados e documentação conferida.',
+                color: 'from-emerald-500 to-teal-600'
               },
               {
                 icon: MessageCircle,
                 title: 'Contato Direto',
-                description:
-                  'Fale diretamente com o profissional via WhatsApp. Sem intermediários, sem taxas.',
+                description: 'Fale diretamente com o profissional via WhatsApp. Sem intermediários, sem taxas.',
+                color: 'from-blue-500 to-indigo-600'
               },
               {
                 icon: Users,
                 title: 'Perfis Completos',
-                description:
-                  'Veja formações, experiência, avaliações e vídeos de apresentação antes de escolher.',
+                description: 'Veja formações, experiência, avaliações e vídeos de apresentação antes de escolher.',
+                color: 'from-purple-500 to-pink-600'
               },
             ].map((feature, index) => (
               <Card
                 key={index}
-                className="border-0 shadow-md hover:shadow-lg transition-shadow animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 rounded-2xl overflow-hidden group"
+                style={{ animationDelay: `${index * 200}ms` }}
               >
-                <CardContent className="p-6">
-                  <div className="w-12 h-12 rounded-xl gradient-highlight flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
+                <CardContent className="p-8">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <feature.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <h3 className="text-2xl font-bold mb-4 text-slate-800">{feature.title}</h3>
+                  <p className="text-slate-600 text-lg leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -256,7 +285,7 @@ const Index = () => {
                 >
                   <div className="aspect-square relative overflow-hidden">
                     <img
-                      src={professional.profileImage}
+                      src={getFileUrl(professional.profileImage)}
                       alt={professional.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -344,7 +373,7 @@ const Index = () => {
               >
                 <div className="aspect-square relative overflow-hidden">
                   <img
-                    src={professional.profileImage}
+                    src={getFileUrl(professional.profileImage)}
                     alt={getDisplayName(professional.name, professional.isHighlighted)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -395,44 +424,46 @@ const Index = () => {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 bg-background">
+      <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
         <div className="container">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-highlight text-white text-sm font-medium mb-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-medium mb-6 shadow-lg">
               <Crown className="w-4 h-4" />
               NOSSOS PLANOS
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Escolha o plano ideal para <span className="text-gradient-highlight">você</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Escolha o plano ideal para <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">você</span>
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-slate-600 max-w-3xl mx-auto text-lg leading-relaxed">
               Planos para profissionais e familiares. Todos começam com 7 dias de acesso completo grátis!
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Contratante (Familiar) Plan */}
-            <Card className="relative overflow-hidden border-2 border-family hover:border-family/80 transition-colors">
-              <div className="absolute top-0 right-0 px-4 py-1 bg-family text-family-foreground text-xs font-medium rounded-bl-lg">
+            <Card className="relative overflow-hidden bg-white border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 rounded-3xl">
+              <div className="absolute top-0 right-0 px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-medium rounded-bl-2xl shadow-lg">
                 PARA FAMÍLIAS
               </div>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-family-light flex items-center justify-center mx-auto mb-3">
-                    <Heart className="w-6 h-6 text-family" />
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-emerald-100 to-teal-100 flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-10 h-10 text-emerald-600" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Contratante</h3>
-                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
+                  <h3 className="text-2xl font-bold mb-3 text-slate-800">Contratante</h3>
+                  <p className="text-slate-600 text-base">Para famílias que buscam cuidadores</p>
                 </div>
-                <div className="text-center mb-6">
-                  <div className="bg-family-light rounded-lg p-3 mb-3">
-                    <span className="text-sm text-family font-medium">🎉 7 dias GRÁTIS</span>
+                <div className="text-center mb-8">
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 mb-4">
+                    <span className="text-base text-emerald-700 font-semibold">🎉 7 dias GRÁTIS</span>
                   </div>
-                  <span className="text-3xl font-bold text-family">R$ 29,90</span>
-                  <span className="text-muted-foreground">/semana</span>
-                  <p className="text-xs text-muted-foreground mt-1">Renovação automática semanal</p>
+                  <span className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    {contratantePlanApi ? `R$ ${Number(contratantePlanApi.price).toFixed(2).replace('.', ',')}` : 'R$29,90'}
+                  </span>
+                  <span className="text-slate-500 text-lg">/mês</span>
+                  <p className="text-sm text-slate-500 mt-2">Renovação automática mensal</p>
                 </div>
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-4 mb-8">
                   {[
                     'Acesso a todos os perfis',
                     'Contato direto via WhatsApp',
@@ -441,40 +472,46 @@ const Index = () => {
                     'Filtros avançados de busca',
                     'Suporte prioritário',
                   ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-family flex-shrink-0" />
+                    <li key={index} className="flex items-center gap-3 text-base">
+                      <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full bg-family hover:bg-family/90 text-family-foreground border-0"
-                  onClick={() => navigate('/cadastro-contratante')}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                  onClick={() => {
+                    if (contratantePlanApi && user) {
+                      navigate('/planos');
+                    } else {
+                      navigate('/cadastro-contratante');
+                    }
+                  }}
                 >
-                  <Heart className="mr-2 h-4 w-4" />
+                  <Heart className="mr-3 h-5 w-5" />
                   Começar 7 dias grátis
                 </Button>
               </CardContent>
             </Card>
 
             {/* Monthly Plan (Profissionais) */}
-            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-6 h-6 text-primary" />
+            <Card className="relative overflow-hidden bg-white border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 rounded-3xl ring-2 ring-blue-500/20">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-10 h-10 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Profissional Mensal</h3>
-                  <p className="text-muted-foreground text-sm">Flexibilidade total</p>
+                  <h3 className="text-2xl font-bold mb-3 text-slate-800">Profissional Mensal</h3>
+                  <p className="text-slate-600 text-base">Flexibilidade total</p>
                 </div>
-                <div className="text-center mb-6">
-                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
-                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                <div className="text-center mb-8">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 mb-4">
+                    <span className="text-base text-blue-700 font-semibold">🎉 7 dias GRÁTIS</span>
                   </div>
-                  <span className="text-3xl font-bold text-gradient-highlight">R$ 39,90</span>
-                  <span className="text-muted-foreground">/mês</span>
+                  <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">R$ 39,90</span>
+                  <span className="text-slate-500 text-lg">/mês</span>
                 </div>
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-4 mb-8">
                   {[
                     'Perfil em destaque nas buscas',
                     'Selo de verificação',
@@ -483,14 +520,14 @@ const Index = () => {
                     'Estatísticas de visualização',
                     'Suporte prioritário',
                   ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                    <li key={index} className="flex items-center gap-3 text-base">
+                      <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full gradient-highlight border-0"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                   onClick={() => navigate('/cadastro?plano=mensal')}
                 >
                   Começar 7 dias grátis
@@ -499,27 +536,27 @@ const Index = () => {
             </Card>
 
             {/* Trimestral Plan */}
-            <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
-              <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
+            <Card className="relative overflow-hidden bg-white border-0 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-2 rounded-3xl">
+              <div className="absolute top-0 right-0 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-medium rounded-bl-2xl shadow-lg">
                 MAIS ECONOMIA
               </div>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <Crown className="w-6 h-6 text-primary" />
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-4">
+                    <Crown className="w-10 h-10 text-purple-600" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Profissional Trimestral</h3>
-                  <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
+                  <h3 className="text-2xl font-bold mb-3 text-slate-800">Profissional Trimestral</h3>
+                  <p className="text-slate-600 text-base">Melhor custo-benefício</p>
                 </div>
-                <div className="text-center mb-6">
-                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
-                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                <div className="text-center mb-8">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 mb-4">
+                    <span className="text-base text-purple-700 font-semibold">🎉 7 dias GRÁTIS</span>
                   </div>
-                  <span className="text-3xl font-bold text-gradient-highlight">R$ 99,90</span>
-                  <span className="text-muted-foreground">/trimestre</span>
-                  <p className="text-sm text-primary font-medium mt-1">Economia de R$ 19,80</p>
+                  <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">R$ 99,90</span>
+                  <span className="text-slate-500 text-lg">/trimestre</span>
+                  <p className="text-base text-purple-600 font-semibold mt-2">Economia de R$ 19,80</p>
                 </div>
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-4 mb-8">
                   {[
                     'Tudo do plano mensal',
                     'Perfil em destaque nas buscas',
@@ -528,58 +565,58 @@ const Index = () => {
                     'Referências profissionais',
                     'Prioridade máxima no ranking',
                   ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                    <li key={index} className="flex items-center gap-3 text-base">
+                      <Check className="w-5 h-5 text-purple-500 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full gradient-highlight border-0"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                   onClick={() => navigate('/cadastro?plano=trimestral')}
                 >
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="mr-3 h-5 w-5" />
                   Começar 7 dias grátis
                 </Button>
               </CardContent>
             </Card>
           </div>
 
-          <p className="text-center text-muted-foreground text-sm mt-8">
+          <p className="text-center text-slate-600 text-base mt-12">
             ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, a cobrança é feita automaticamente.
           </p>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-background">
+      <section className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
         <div className="container">
-          <Card className="gradient-highlight border-0 overflow-hidden">
-            <CardContent className="p-8 md:p-12 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+          <Card className="bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl rounded-3xl overflow-hidden">
+            <CardContent className="p-12 md:p-16 text-center">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 É profissional de saúde?
               </h2>
-              <p className="text-white/90 mb-6 max-w-xl mx-auto">
+              <p className="text-white/90 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
                 Cadastre-se gratuitamente e divulgue seus serviços para milhares de
                 famílias em busca de cuidadores qualificados. Perfil FREE disponível!
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="text-base"
+                  className="text-lg px-8 py-4 bg-white text-slate-800 hover:bg-slate-50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                   onClick={() => navigate('/cadastro')}
                 >
                   Criar perfil FREE
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-3 h-5 w-5" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-base bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                   onClick={() => navigate('/cadastro?destaque=1')}
                 >
-                  <Sparkles className="mr-2 h-5 w-5" />
+                  <Sparkles className="mr-3 h-5 w-5" />
                   Quero ser Destaque
                 </Button>
               </div>
@@ -589,49 +626,7 @@ const Index = () => {
       </section>
 
       {/* Login Demo Info */}
-      <section className="py-8 bg-muted/50">
-        <div className="container">
-          <Card className="border-dashed">
-            <CardContent className="p-6">
-              <h3 className="font-semibold mb-4 text-center">
-                🔐 Contas de Demonstração
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Enfermeiro(a)</p>
-                  <p className="text-muted-foreground text-xs">enfermeiro@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Técnico(a)</p>
-                  <p className="text-muted-foreground text-xs">tecnico@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Cuidador(a)</p>
-                  <p className="text-muted-foreground text-xs">cuidador@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Acompanhante</p>
-                  <p className="text-muted-foreground text-xs">acompanhante@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Contratante</p>
-                  <p className="text-muted-foreground text-xs">contratante@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-                <div className="p-3 bg-background rounded-lg">
-                  <p className="font-medium text-gradient-highlight">Admin</p>
-                  <p className="text-muted-foreground text-xs">admin@kuid.com</p>
-                  <p className="text-muted-foreground text-xs">Senha: 123456</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+
     </Layout>
   );
 };

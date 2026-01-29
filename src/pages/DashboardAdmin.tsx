@@ -24,6 +24,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { mockProfessionals, Professional } from '@/data/mockData';
 import { StarRating } from '@/components/ui/StarRating';
+import { getFileUrl } from '@/lib/utils';
 import {
   Users,
   Search,
@@ -260,7 +261,7 @@ export default function DashboardAdmin() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <img
-                              src={professional.profileImage}
+                              src={getFileUrl(professional.profileImage)}
                               alt={professional.name}
                               className="w-10 h-10 rounded-lg object-cover"
                             />

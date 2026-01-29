@@ -46,6 +46,9 @@ export default function Planos() {
   // Ensure plans is always an array
   const plansList = Array.isArray(plans) ? plans : [];
 
+  // Debug: log plans to console
+  console.log('Planos retornados da API:', plansList);
+
   // Find monthly, trimestral and contratante plans from database
   const monthlyPlan = plansList.find((p: Plan) =>
     p.name.toLowerCase().includes('mensal') || p.duration_days === 30
@@ -53,14 +56,50 @@ export default function Planos() {
   const trimestralPlan = plansList.find((p: Plan) =>
     p.name.toLowerCase().includes('trimestral') || p.duration_days === 90
   );
-  const contratantePlan = plansList.find((p: Plan) =>
-    p.name.toLowerCase().includes('contratante') || p.name.toLowerCase().includes('familiar') || p.duration_days === 7
+  // Try to find a contratante/familiar plan in the API result
+  const contratantePlanApi = plansList.find((p: Plan) =>
+    p.name.toLowerCase().includes('contratante') || p.name.toLowerCase().includes('familiar') || p.name.toLowerCase().includes('family')
   );
+
+  // log contratante plan for debugging
+  console.log('contratantePlanApi:', contratantePlanApi);
+
+  // Fallback display plan (used only for showing the card when API doesn't provide one)
+  const contratantePlanDisplay: Plan = contratantePlanApi || {
+    id: -1,
+    name: 'Plano Contratante',
+    price: 29.9,
+    currency: 'BRL',
+    duration_days: 30,
+  };
 
   // Check if user is a professional
   const isProfessional = user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(user.role);
   const isContratante = user && user.role === 'contratante';
   const buttonText = user ? 'Assinar Agora' : 'Fazer Login para Assinar';
+
+  const handleContratanteClick = async () => {
+    if (!user) {
+      navigate('/login?redirect=/planos');
+      return;
+    }
+    // Only attempt checkout when API returned a real plan
+    if (!contratantePlanApi) {
+      // Plan not available in API - guide user to contratante signup or show message
+      alert('Plano de contratante ainda não disponível para compra. Você pode criar uma conta de contratante.');
+      navigate('/cadastro-contratante');
+      return;
+    }
+    try {
+      console.log('Starting contratante checkout, plan id:', contratantePlanApi?.id);
+      const result = await createPref.mutateAsync({ userId: user.id, planId: contratantePlanApi.id });
+      const url = (result && (result.init_point || result.sandbox_init_point)) || (result?.preference?.response?.init_point);
+      if (url) window.location.href = url;
+      else alert('Erro ao criar preferência para contratante.');
+    } catch (err) {
+      alert('Erro ao iniciar checkout: ' + JSON.stringify(err));
+    }
+  };
 
   const handlePlanClick = async (planType: 'mensal' | 'trimestral' | 'contratante') => {
     if (!user) {
@@ -72,7 +111,7 @@ export default function Planos() {
     let plan;
     if (planType === 'mensal') plan = monthlyPlan;
     else if (planType === 'trimestral') plan = trimestralPlan;
-    else plan = contratantePlan;
+    else plan = contratantePlanApi;
 
     if (!plan) {
       alert('Plano não encontrado. Por favor, tente novamente.');
@@ -80,6 +119,7 @@ export default function Planos() {
     }
 
     try {
+      console.log('Starting checkout for plan id:', plan?.id);
       const result = await createPref.mutateAsync({ userId: user.id, planId: plan.id });
       const url = (result && (result.init_point || result.sandbox_init_point)) || (result?.preference?.response?.init_point);
       if (url) window.location.href = url;
@@ -120,55 +160,7 @@ export default function Planos() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Contratante (Familiar) Plan */}
-            <Card className="relative overflow-hidden border-2 border-family hover:border-family/80 transition-colors">
-              <div className="absolute top-0 right-0 px-4 py-1 bg-family text-family-foreground text-xs font-medium rounded-bl-lg">
-                PARA FAMÍLIAS
-              </div>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-family-light flex items-center justify-center mx-auto mb-3">
-                    <Heart className="w-6 h-6 text-family" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Contratante</h3>
-                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
-                </div>
-                <div className="text-center mb-6">
-                  <div className="bg-family-light rounded-lg p-3 mb-3">
-                    <span className="text-sm text-family font-medium">🎉 7 dias GRÁTIS</span>
-                  </div>
-                  <span className="text-3xl font-bold text-family">
-                    {contratantePlan ? `R$ ${contratantePlan.price.toFixed(2).replace('.', ',')}` : 'R$ 29,90'}
-                  </span>
-                  <span className="text-muted-foreground">/semana</span>
-                  <p className="text-xs text-muted-foreground mt-1">Renovação automática semanal</p>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {[
-                    'Acesso a todos os perfis',
-                    'Contato direto via WhatsApp',
-                    'Visualizar vídeos de apresentação',
-                    'Ver certificados e diplomas',
-                    'Filtros avançados de busca',
-                    'Suporte prioritário',
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-family flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full bg-family hover:bg-family/90 text-family-foreground border-0"
-                  onClick={() => isContratante ? handlePlanClick('contratante') : navigate('/cadastro-contratante')}
-                >
-                  <Heart className="mr-2 h-4 w-4" />
-                  {isContratante ? buttonText : 'Começar 7 dias grátis'}
-                </Button>
-              </CardContent>
-            </Card>
-
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {/* Monthly Plan */}
             <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
               <CardContent className="p-6">
@@ -264,9 +256,67 @@ export default function Planos() {
                 </Button>
               </CardContent>
             </Card>
+
+
+
+            {/* Contratante / Familiar Plan (third column) */}
+            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
+              <div className="absolute top-0 right-0 px-4 py-1 bg-primary text-white text-xs font-medium rounded-bl-lg">PARA FAMÍLIAS</div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Heart className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Contratante (Familiar)</h3>
+                  <p className="text-muted-foreground text-sm">Para famílias que buscam cuidadores</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-family">
+                    {`R$ ${contratantePlanDisplay.price.toFixed(2).replace('.', ',')}`}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                  <p className="text-xs text-muted-foreground mt-1">Renovação automática mensal</p>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Acesso a todos os perfis',
+                    'Contato direto via WhatsApp',
+                    'Visualizar vídeos de apresentação',
+                    'Ver certificados e diplomas',
+                    'Filtros avançados de busca',
+                    'Suporte prioritário',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full bg-primary gradient-highlight border-0"
+                  onClick={() => {
+                    // If API has the plan, try checkout (handles login internally). Otherwise guide to contratante signup.
+                    if (contratantePlanApi) {
+                      handleContratanteClick();
+                    } else {
+                      // if user is not logged, redirect to login so they can sign up as contratante
+                      if (!user) navigate('/cadastro-contratante');
+                      else navigate('/cadastro-contratante');
+                    }
+                  }}
+                  data-testid="contratante-plan-button"
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  {isContratante && contratantePlanApi ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
-          <p className="text-center text-muted-foreground text-sm mt-8">
+          <p className="text-center text-muted-foreground text-sm mb-16">
             ✨ Todos os planos incluem 7 dias de trial grátis. Após o período, a cobrança é feita automaticamente.
           </p>
         </div>

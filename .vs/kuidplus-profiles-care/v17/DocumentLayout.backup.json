@@ -1,0 +1,212 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Planos.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\Planos.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\messages.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\routes\\messages.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\components\\layout\\Header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\components\\layout\\Header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\professionals.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\routes\\professionals.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\PerfilProfissional.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\PerfilProfissional.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\DashboardProfissional.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\DashboardProfissional.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Cadastro.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\Cadastro.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Buscar.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\Buscar.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\contexts\\AuthContext.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\contexts\\AuthContext.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\index.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css||{8B382828-6202-11D1-8870-0000F87579D2}|",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\index.css||{8B382828-6202-11D1-8870-0000F87579D2}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Index.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:src\\pages\\Index.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Index.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Index.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\Index.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Index.tsx",
+              "RelativeToolTip": "src\\pages\\Index.tsx",
+              "ViewState": "AgIAAJ4CAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-28T07:40:10.079Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Planos.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Planos.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\Planos.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Planos.tsx",
+              "RelativeToolTip": "src\\pages\\Planos.tsx",
+              "ViewState": "AgIAAC4BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-28T06:35:09.159Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "index.css",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css",
+              "RelativeDocumentMoniker": "src\\index.css",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css",
+              "RelativeToolTip": "src\\index.css",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-01-26T22:44:56.293Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "index.css",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css",
+              "RelativeDocumentMoniker": "src\\index.css",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\index.css",
+              "RelativeToolTip": "src\\index.css",
+              "ViewState": "AgIAAPkAAAAAAAAAAABBwAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-01-26T22:44:55.779Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AuthContext.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\contexts\\AuthContext.tsx",
+              "RelativeDocumentMoniker": "src\\contexts\\AuthContext.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\contexts\\AuthContext.tsx",
+              "RelativeToolTip": "src\\contexts\\AuthContext.tsx",
+              "ViewState": "AgIAAHQAAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T22:19:53.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Buscar.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Buscar.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\Buscar.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Buscar.tsx",
+              "RelativeToolTip": "src\\pages\\Buscar.tsx",
+              "ViewState": "AgIAAGkCAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T22:11:15.033Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Cadastro.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Cadastro.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\Cadastro.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\Cadastro.tsx",
+              "RelativeToolTip": "src\\pages\\Cadastro.tsx",
+              "ViewState": "AgIAAGsBAAAAAAAAAABRwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T22:03:34.572Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "DashboardProfissional.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\DashboardProfissional.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\DashboardProfissional.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\DashboardProfissional.tsx",
+              "RelativeToolTip": "src\\pages\\DashboardProfissional.tsx",
+              "ViewState": "AgIAAMQDAAAAAAAAAABRwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T21:58:52.776Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PerfilProfissional.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\PerfilProfissional.tsx",
+              "RelativeDocumentMoniker": "src\\pages\\PerfilProfissional.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\pages\\PerfilProfissional.tsx",
+              "RelativeToolTip": "src\\pages\\PerfilProfissional.tsx",
+              "ViewState": "AgIAAP0BAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T21:56:54.816Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "professionals.js",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\professionals.js",
+              "RelativeDocumentMoniker": "backend\\routes\\professionals.js",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\professionals.js",
+              "RelativeToolTip": "backend\\routes\\professionals.js",
+              "ViewState": "AgIAAP4BAAAAAAAAAIBJwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-01-26T21:38:44.427Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Header.tsx",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\components\\layout\\Header.tsx",
+              "RelativeDocumentMoniker": "src\\components\\layout\\Header.tsx",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\src\\components\\layout\\Header.tsx",
+              "RelativeToolTip": "src\\components\\layout\\Header.tsx",
+              "ViewState": "AgIAABkBAAAAAAAAAEBVwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-01-26T20:43:30.727Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "messages.js",
+              "DocumentMoniker": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\messages.js",
+              "RelativeDocumentMoniker": "backend\\routes\\messages.js",
+              "ToolTip": "C:\\Users\\FIREWALL\\Pictures\\uelbersonprojeto\\pastadadisgraca\\kuidplus-profiles-care\\backend\\routes\\messages.js",
+              "RelativeToolTip": "backend\\routes\\messages.js",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-01-26T15:46:35.092Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
