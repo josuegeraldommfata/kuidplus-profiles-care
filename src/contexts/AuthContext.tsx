@@ -7,6 +7,15 @@ import React, {
 } from 'react';
 import api from '@/lib/api';
 import { User } from '@/data/mockData';
+
+// Extend User type for subscription fields
+declare module '@/data/mockData' {
+  interface User {
+    trial_ends_at?: string | null;
+    subscription_status?: string | null;
+    plan_type?: string | null;
+  }
+}
 import { getFileUrl } from '@/lib/utils';
 
 interface AuthContextType {
