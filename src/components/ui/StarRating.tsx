@@ -7,6 +7,8 @@ interface StarRatingProps {
   size?: 'sm' | 'md' | 'lg';
   showCount?: boolean;
   className?: string;
+  interactive?: boolean;
+  onRatingChange?: (rating: number) => void;
 }
 
 export function StarRating({
@@ -15,6 +17,8 @@ export function StarRating({
   size = 'md',
   showCount = true,
   className,
+  interactive = false,
+  onRatingChange,
 }: StarRatingProps) {
   const sizes = {
     sm: 'w-3 h-3',
@@ -34,29 +38,41 @@ export function StarRating({
   const hasHalfStar = safeRating % 1 >= 0.5;
   const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
+  const handleClick = (starIndex: number) => {
+    if (interactive && onRatingChange) {
+      onRatingChange(starIndex + 1);
+    }
+  };
+
   return (
     <div className={cn('flex items-center gap-1', className)}>
       <div className="flex">
-        {[...Array(fullStars)].map((_, i) => (
-          <Star
-            key={`full-${i}`}
-            className={cn(sizes[size], 'fill-warning text-warning')}
-          />
-        ))}
-        {hasHalfStar && (
-          <div className="relative">
-            <Star className={cn(sizes[size], 'text-muted-foreground/30')} />
-            <div className="absolute inset-0 overflow-hidden w-1/2">
-              <Star className={cn(sizes[size], 'fill-warning text-warning')} />
-            </div>
-          </div>
-        )}
-        {[...Array(emptyStars)].map((_, i) => (
-          <Star
-            key={`empty-${i}`}
-            className={cn(sizes[size], 'text-muted-foreground/30')}
-          />
-        ))}
+        {[...Array(5)].map((_, i) => {
+          const isFilled = i < fullStars;
+          const isHalf = !isFilled && i === fullStars && hasHalfStar;
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={!interactive}
+              onClick={() => handleClick(i)}
+              className={cn(interactive && 'cursor-pointer hover:scale-110 transition-transform', !interactive && 'cursor-default')}
+            >
+              {isFilled ? (
+                <Star className={cn(sizes[size], 'fill-warning text-warning')} />
+              ) : isHalf ? (
+                <div className="relative">
+                  <Star className={cn(sizes[size], 'text-muted-foreground/30')} />
+                  <div className="absolute inset-0 overflow-hidden w-1/2">
+                    <Star className={cn(sizes[size], 'fill-warning text-warning')} />
+                  </div>
+                </div>
+              ) : (
+                <Star className={cn(sizes[size], 'text-muted-foreground/30')} />
+              )}
+            </button>
+          );
+        })}
       </div>
       {showCount && (
         <span className={cn('text-muted-foreground', textSizes[size])}>

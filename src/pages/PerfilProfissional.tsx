@@ -347,7 +347,7 @@ export default function PerfilProfissional() {
                     }
                   </p>
                   {!professional.isHighlighted && professional.bio.length > 150 && (
-                    <p class="text-xs text-muted-foreground mt-2 italic">
+                    <p className="text-xs text-muted-foreground mt-2 italic">
                       Profissionais em destaque mostram descrição completa
                     </p>
                   )}
