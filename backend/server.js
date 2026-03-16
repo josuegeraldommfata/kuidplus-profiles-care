@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const path = require('path');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const http = require('http');
+const { Server: IOServer } = require('socket.io');
 
 const pool = require('./db');
 
@@ -12,6 +14,12 @@ const userRoutes = require('./routes/users');
 const professionalRoutes = require('./routes/professionals');
 const paymentRoutes = require('./routes/payments');
 const mpRoutes = require('./routes/mercadopago');
+const reviewRoutes = require('./routes/reviews');
+const scheduleRoutes = require('./routes/schedules');
+const contractRoutes = require('./routes/contracts');
+const statsRoutes = require('./routes/stats');
+const proposalsRoutes = require('./routes/proposals');
+const messagesRoutes = require('./routes/messages');
 
 dotenv.config();
 
@@ -43,6 +51,12 @@ app.use('/api/users', userRoutes);
 app.use('/api/professionals', professionalRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/mercadopago', mpRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/contracts', contractRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/proposals', proposalsRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // Teste simples
 app.get('/api/test', (req, res) => {
@@ -70,9 +84,45 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Create HTTP server and attach Socket.IO for real-time chat
+const server = http.createServer(app);
+const io = new IOServer(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Authorization'],
+  },
+});
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('join', (room) => {
+    if (!room) return;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined room ${room}`);
+  });
+
+  socket.on('leave', (room) => {
+    if (!room) return;
+    socket.leave(room);
+  });
+
+  socket.on('message', (msg) => {
+    // msg should contain: { room, message }
+    if (!msg || !msg.room) return;
+    // Broadcast to room
+    socket.to(msg.room).emit('message', msg);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
+
 // Server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
 
-module.exports = { app, pool };
+module.exports = { app, pool, server, io };

@@ -1,15 +1,29 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import api from '@/lib/api';
 import { User } from '@/data/mockData';
 import { getFileUrl } from '@/lib/utils';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
   updateUser: (data: Partial<User>) => void;
+  checkSubscriptionStatus: () => {
+    needsUpgrade: boolean;
+    daysLeft: number;
+    planRequired: string;
+  } | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,24 +32,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // normalize user object to include both profile_image and profileImage
-  const normalizeUser = (u: any) => {
+  // Normaliza usuário (profile_image / profileImage)
+  const normalizeUser = (u: any): User | null => {
     if (!u) return null;
-    const profile_image = (u.profile_image as any) || (u.profileImage as any) || null;
-    return { ...u, profile_image, profileImage: profile_image ? getFileUrl(profile_image) : null } as User;
+    const profile_image = u.profile_image || u.profileImage || null;
+
+    return {
+      ...u,
+      profile_image,
+      profileImage: profile_image ? getFileUrl(profile_image) : null,
+    } as User;
   };
 
-  // Check for existing token on mount
+  // Verifica token ao iniciar
   useEffect(() => {
     const token = localStorage.getItem('kuid_token');
+
     if (token) {
-      // Verify token and get user data
-      api.get('/api/auth/me')
-        .then(response => {
+      api
+        .get('/api/auth/me')
+        .then((response) => {
           setUser(normalizeUser(response.data.user));
         })
         .catch(() => {
           localStorage.removeItem('kuid_token');
+          setUser(null);
         })
         .finally(() => setLoading(false));
     } else {
@@ -46,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user: userData } = response.data as any;
+      const { token, user: userData } = response.data;
 
       if (!token || !userData) {
         throw new Error('Resposta inválida do servidor');
@@ -55,34 +76,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('kuid_token', token);
       setUser(normalizeUser(userData));
 
-      return {
-        success: true,
-        message: 'Login realizado com sucesso!',
-      };
+      return { success: true, message: 'Login realizado com sucesso!' };
     } catch (error: any) {
-      console.error('Login error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-
-      const errorMessage = error.response?.data?.error || error.message || 'Erro ao fazer login. Verifique suas credenciais.';
-
       return {
         success: false,
-        message: errorMessage,
+        message:
+          error.response?.data?.error ||
+          error.message ||
+          'Erro ao fazer login',
       };
     }
   };
 
   const updateUser = (data: Partial<User>) => {
-    setUser(prev => {
+    setUser((prev) => {
       if (!prev) return normalizeUser(data as any);
+
       const merged: any = { ...prev, ...data };
-      merged.profile_image = merged.profile_image || merged.profileImage || null;
-      merged.profileImage = merged.profile_image ? getFileUrl(merged.profile_image) : null;
+      merged.profile_image =
+        merged.profile_image || merged.profileImage || null;
+      merged.profileImage = merged.profile_image
+        ? getFileUrl(merged.profile_image)
+        : null;
+
       return merged as User;
     });
+  };
+
+  const checkSubscriptionStatus = () => {
+    if (!user) {
+      return { needsUpgrade: false, daysLeft: 0, planRequired: '' };
+    }
+
+    const now = new Date();
+    const trialEndsAt = user.trial_ends_at
+      ? new Date(user.trial_ends_at)
+      : null;
+
+    let daysLeft = 0;
+    if (trialEndsAt) {
+      daysLeft = Math.ceil(
+        (trialEndsAt.getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+    }
+
+    let needsUpgrade = false;
+    let planRequired = '';
+
+    if (user.role === 'contratante') {
+      if (user.subscription_status === 'trial' && daysLeft <= 0) {
+        needsUpgrade = true;
+        planRequired = 'Contratante (Familiar)';
+      } else if (
+        user.subscription_status === 'expired' ||
+        !user.plan_type
+      ) {
+        needsUpgrade = true;
+        planRequired = 'Contratante (Familiar)';
+      }
+    } else {
+      if (user.subscription_status === 'trial' && daysLeft <= 0) {
+        needsUpgrade = true;
+        planRequired = 'Mensal ou Trimestral';
+      } else if (
+        user.subscription_status === 'expired' ||
+        !user.plan_type
+      ) {
+        needsUpgrade = true;
+        planRequired = 'Mensal ou Trimestral';
+      }
+    }
+
+    return {
+      needsUpgrade,
+      daysLeft: Math.max(0, daysLeft),
+      planRequired,
+    };
   };
 
   const logout = () => {
@@ -91,7 +161,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        loading,
+        updateUser,
+        checkSubscriptionStatus,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -99,21 +179,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
-    // Em desenvolvimento, apenas logar o erro em vez de quebrar
     if (process.env.NODE_ENV === 'development') {
-      console.warn('useAuth called outside AuthProvider. Make sure AuthProvider wraps your app.');
-      // Retornar valores padrão para evitar crash durante hot reload
+      console.warn(
+        'useAuth chamado fora do AuthProvider'
+      );
       return {
         user: null,
-        login: async () => ({ success: false, message: 'AuthProvider não encontrado' }),
+        login: async () => ({
+          success: false,
+          message: 'AuthProvider não encontrado',
+        }),
         logout: () => {},
         isAuthenticated: false,
         loading: false,
         updateUser: () => {},
+        checkSubscriptionStatus: () => null,
       };
     }
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 }
+
+
+

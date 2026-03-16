@@ -1,11 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@import '@fontsource/outfit/400.css';
-@import '@fontsource/outfit/500.css';
-@import '@fontsource/outfit/600.css';
-@import '@fontsource/outfit/700.css';
+@import '@fontsource/outfit/400.css';\n@import '@fontsource/outfit/500.css';\n@import '@fontsource/outfit/600.css';\n@import '@fontsource/outfit/700.css';\n\n@tailwind base;\n@tailwind components;\n@tailwind utilities;\n
 
 @layer base {
   :root {

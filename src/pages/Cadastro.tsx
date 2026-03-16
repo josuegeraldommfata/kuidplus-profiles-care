@@ -69,12 +69,19 @@ export default function Cadastro() {
  const [videoFile, setVideoFile] = useState<File | null>(null);
  const [videoPreview, setVideoPreview] = useState<string | null>(null);
 
- // If no tipo specified, show selection page
+ useEffect(() => {
+ return () => {
+ if (profilePhotoPreview && profilePhotoPreview.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
+ if (videoPreview && videoPreview.startsWith('blob:')) URL.revokeObjectURL(videoPreview);
+ };
+ }, [profilePhotoPreview, videoPreview]);
+
+ // If no tipo specified, show selection page (AFTER all hooks)
  if (!tipo) {
  return <EscolhaTipoCadastro />;
  }
 
- // If tipo is contratante, show contratante form
+ // If tipo is contratante, show contratante form (AFTER all hooks)
  if (tipo === 'contratante') {
  return <CadastroContratante />;
  }
@@ -112,13 +119,6 @@ export default function Cadastro() {
  setVideoPreview(url);
  }
  };
-
- useEffect(() => {
- return () => {
- if (profilePhotoPreview && profilePhotoPreview.startsWith('blob:')) URL.revokeObjectURL(profilePhotoPreview);
- if (videoPreview && videoPreview.startsWith('blob:')) URL.revokeObjectURL(videoPreview);
- };
- }, [profilePhotoPreview, videoPreview]);
 
  const handleSubmit = async (e: React.FormEvent) => {
  e.preventDefault();
@@ -235,10 +235,15 @@ export default function Cadastro() {
  <SelectValue placeholder="Selecione" />
  </SelectTrigger>
  <SelectContent>
- <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
- <SelectItem value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</SelectItem>
  <SelectItem value="Cuidador(a)">Cuidador(a)</SelectItem>
  <SelectItem value="Acompanhante Hospitalar">Acompanhante Hospitalar</SelectItem>
+ <SelectItem value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</SelectItem>
+ <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
+ <SelectItem value="Psicólogo(a)">Psicólogo(a)</SelectItem>
+ <SelectItem value="Fonoaudiólogo(a)">Fonoaudiólogo(a)</SelectItem>
+ <SelectItem value="Fisioterapeuta">Fisioterapeuta</SelectItem>
+ <SelectItem value="Nutricionista">Nutricionista</SelectItem>
+ <SelectItem value="Terapeuta Ocupacional">Terapeuta Ocupacional</SelectItem>
  </SelectContent>
  </Select>
  </div>

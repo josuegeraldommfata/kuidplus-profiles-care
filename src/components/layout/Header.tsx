@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, getFileUrl } from '@/lib/utils';
 
 export function Header() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -20,12 +20,12 @@ export function Header() {
 
   const getDashboardPath = () => {
     if (!user || !user.role) return '/';
-    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante'];
+    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante', 'profissional'];
     if (professionalRoles.includes(user.role)) {
       return '/dashboard-profissional';
     }
     if (user.role === 'contratante') {
-      return '/buscar';
+      return '/dashboard-contratante';
     }
     if (user.role === 'admin') {
       return '/dashboard-admin';
@@ -35,9 +35,12 @@ export function Header() {
 
   const getProfilePath = () => {
     if (!user) return '/';
-    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante'];
+    const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante', 'profissional'];
     if (professionalRoles.includes(user.role)) {
       return `/profissional/${user.id}`;
+    }
+    if (user.role === 'contratante') {
+      return '/perfil-contratante';
     }
     return getDashboardPath();
   };
@@ -101,7 +104,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={getFileUrl(user?.profileImage)} alt={user?.name} />
+                    <AvatarImage src={user?.profileImage ? getFileUrl(user.profileImage) : undefined} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.name?.charAt(0)}
                     </AvatarFallback>
@@ -127,13 +130,17 @@ export function Header() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(getDashboardPath())}>
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
+                <DropdownMenuItem asChild>
+                  <Link to={getDashboardPath()}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(getProfilePath())}>
-                  <User className="mr-2 h-4 w-4" />
-                  Meu Perfil
+                <DropdownMenuItem asChild>
+                  <Link to={getProfilePath()}>
+                    <User className="mr-2 h-4 w-4" />
+                    Meu Perfil
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive">
@@ -217,7 +224,7 @@ export function Header() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={getFileUrl(user?.profileImage)} alt={user?.name} />
+                    <AvatarImage src={user?.profileImage ? getFileUrl(user.profileImage) : undefined} alt={user?.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {user?.name?.charAt(0)}
                     </AvatarFallback>

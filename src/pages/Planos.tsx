@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layout } from '@/components/layout/Layout';
@@ -14,8 +14,27 @@ type Plan = {
   price: number;
   currency: string;
   duration_days: number;
+  slug: string;
   features?: Record<string, unknown>;
 };
+
+const PLAN_SLUGS = {
+  contratante: 'contratante',
+  base: 'basico',
+  profissional: 'profissional',
+  premium: 'empresa'
+};
+
+export function getRequiredPlan(plans: Plan[], role: string) {
+  const map: Record<string, string> = {
+    contratante: 'family_monthly',
+    base: 'basico',
+    profissional: 'profissional',
+    premium: 'empresa'
+  };
+
+  return plans.find(p => p.slug === map[role]);
+}
 
 const fetchPlans = async (): Promise<Plan[]> => {
   try {
@@ -30,8 +49,15 @@ const fetchPlans = async (): Promise<Plan[]> => {
 
 export default function Planos() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { data: plansData, isLoading } = useQuery({ queryKey: ['plans'], queryFn: fetchPlans });
+
+  // Ref to track if auto-checkout was attempted (to prevent infinite loops)
+  const autoCheckoutAttempted = React.useRef(false);
+
+  // Get selected plan from URL (after login)
+  const selectedPlanParam = searchParams.get('plan') as 'base' | 'profissional' | 'premium' | 'contratante' | null;
 
   // Ensure plans is always an array
   const plans = Array.isArray(plansData) ? plansData : [];
@@ -49,17 +75,11 @@ export default function Planos() {
   // Debug: log plans to console
   console.log('Planos retornados da API:', plansList);
 
-  // Find monthly, trimestral and contratante plans from database
-  const monthlyPlan = plansList.find((p: Plan) =>
-    p.name.toLowerCase().includes('mensal') || p.duration_days === 30
-  );
-  const trimestralPlan = plansList.find((p: Plan) =>
-    p.name.toLowerCase().includes('trimestral') || p.duration_days === 90
-  );
-  // Try to find a contratante/familiar plan in the API result
-  const contratantePlanApi = plansList.find((p: Plan) =>
-    p.name.toLowerCase().includes('contratante') || p.name.toLowerCase().includes('familiar') || p.name.toLowerCase().includes('family')
-  );
+// Find plans from database by slug (novos planos Kuidd+)
+  const basePlan = plansList.find((p: Plan) => p.slug === 'basico');
+  const profissionalPlan = plansList.find((p: Plan) => p.slug === 'profissional');
+  const premiumPlan = plansList.find((p: Plan) => p.slug === 'empresa');
+  const contratantePlanApi = plansList.find((p: Plan) => p.slug === PLAN_SLUGS.contratante);
 
   // log contratante plan for debugging
   console.log('contratantePlanApi:', contratantePlanApi);
@@ -71,10 +91,11 @@ export default function Planos() {
     price: 29.9,
     currency: 'BRL',
     duration_days: 30,
+    slug: 'family_monthly',
   };
 
-  // Check if user is a professional
-  const isProfessional = user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(user.role);
+  // Check if user is a professional (incluindo novos tipos)
+  const isProfessional = user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico', 'psicologo', 'fonoaudiologo', 'fisioterapeuta', 'nutricionista', 'terapeuta'].includes(user.role);
   const isContratante = user && user.role === 'contratante';
   const buttonText = user ? 'Assinar Agora' : 'Fazer Login para Assinar';
 
@@ -101,16 +122,16 @@ export default function Planos() {
     }
   };
 
-  const handlePlanClick = async (planType: 'mensal' | 'trimestral' | 'contratante') => {
+  const handlePlanClick = async (planType: 'base' | 'profissional' | 'premium' | 'contratante') => {
     if (!user) {
-      // Redirect to login if not authenticated
-      navigate('/login?redirect=/planos');
+      navigate(`/login?redirect=/planos&plan=${planType}`);
       return;
     }
 
     let plan;
-    if (planType === 'mensal') plan = monthlyPlan;
-    else if (planType === 'trimestral') plan = trimestralPlan;
+    if (planType === 'base') plan = basePlan;
+    else if (planType === 'profissional') plan = profissionalPlan;
+    else if (planType === 'premium') plan = premiumPlan;
     else plan = contratantePlanApi;
 
     if (!plan) {
@@ -128,6 +149,58 @@ export default function Planos() {
       alert('Erro ao iniciar checkout: ' + JSON.stringify(err));
     }
   };
+
+  // Auto-start checkout when user is logged in and has a selected plan from URL
+  // This runs after all hooks and functions are defined, but before early return
+  const executeAutoCheckout = () => {
+    if (user && selectedPlanParam && !isLoading && !autoCheckoutAttempted.current) {
+      autoCheckoutAttempted.current = true;
+      // Find the plan based on the parameter
+      let plan;
+      if (selectedPlanParam === 'base') plan = basePlan;
+      else if (selectedPlanParam === 'profissional') plan = profissionalPlan;
+      else if (selectedPlanParam === 'premium') plan = premiumPlan;
+      else if (selectedPlanParam === 'contratante') plan = contratantePlanApi;
+
+      if (plan) {
+        // Clean URL first
+        navigate('/planos', { replace: true });
+        // Then start checkout
+        handlePlanClick(selectedPlanParam);
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Try auto checkout BEFORE early return
+  if (executeAutoCheckout()) {
+    return (
+      <Layout>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Iniciando checkout...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Blindagem obrigatória - verificar se planos obrigatórios existem
+  if (!basePlan || !profissionalPlan || !premiumPlan) {
+    console.error('Planos obrigatórios não encontrados', plans);
+    return (
+      <Layout>
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Nenhum plano disponível no momento.</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -160,33 +233,126 @@ export default function Planos() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Monthly Plan */}
+<div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {/* PLANO BASE */}
             <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
               <CardContent className="p-6">
                 <div className="text-center mb-6">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                     <Users className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Profissional Mensal</h3>
-                  <p className="text-muted-foreground text-sm">Flexibilidade total</p>
+                  <h3 className="text-xl font-bold mb-2">PLANO BASE</h3>
+                  <p className="text-muted-foreground text-sm">Perfil ativo + calendário + feedbacks</p>
                 </div>
                 <div className="text-center mb-6">
                   <div className="bg-primary/5 rounded-lg p-3 mb-3">
                     <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
                   </div>
                   <span className="text-3xl font-bold text-gradient-highlight">
-                    {monthlyPlan ? `R$ ${monthlyPlan.price.toFixed(2).replace('.', ',')}` : 'R$ 39,90'}
+                    {basePlan ? `R$ ${Number(basePlan.price).toFixed(2).replace('.', ',')}` : 'R$ 49,00'}
                   </span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
                 <ul className="space-y-3 mb-6">
                   {[
-                    'Perfil em destaque nas buscas',
-                    'Selo de verificação',
+                    'Perfil ativo na plataforma',
+                    'Calendário de disponibilidade',
+                    'Sistema de feedbacks',
+                    'Estatísticas de visualização',
+                    'Suporte básico',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => isProfessional ? handlePlanClick('base') : navigate('/cadastro?plano=base')}
+                >
+                  {isProfessional && <Crown className="mr-2 h-4 w-4" />}
+                  {isProfessional ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* PLANO PROFISSIONAL */}
+            <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
+              <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
+                MAIS POPULAR
+              </div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Crown className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">PLANO PROFISSIONAL</h3>
+                  <p className="text-muted-foreground text-sm">Tudo do Base + Destaque + Verificado</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">
+                    {profissionalPlan ? `R$ ${Number(profissionalPlan.price).toFixed(2).replace('.', ',')}` : 'R$ 99,00'}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Tudo do plano Base',
+                    'Destaque nas buscas',
+                    'Selo de profissional verificado',
                     'Vídeo de apresentação',
                     'Referências profissionais',
-                    'Estatísticas de visualização',
+                    'Prioridade no ranking',
+                  ].map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full gradient-highlight border-0"
+                  onClick={() => isProfessional ? handlePlanClick('profissional') : navigate('/cadastro?plano=profissional')}
+                  disabled={isProfessional && !profissionalPlan}
+                >
+                  {isProfessional ? <Crown className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {isProfessional ? buttonText : 'Começar 7 dias grátis'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* PLANO PREMIUM */}
+            <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-colors">
+              <div className="absolute top-0 right-0 px-4 py-1 bg-amber-500 text-white text-xs font-medium rounded-bl-lg">
+                TOPO
+              </div>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
+                    <Sparkles className="w-6 h-6 text-amber-500" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">PLANO PREMIUM</h3>
+                  <p className="text-muted-foreground text-sm">Tudo + Topo + Especialista</p>
+                </div>
+                <div className="text-center mb-6">
+                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
+                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
+                  </div>
+                  <span className="text-3xl font-bold text-gradient-highlight">
+                    {premiumPlan ? `R$ ${Number(premiumPlan.price).toFixed(2).replace('.', ',')}` : 'R$ 179,00'}
+                  </span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Tudo do plano Profissional',
+                    'Aparece no topo das buscas',
+                    'Badge de especialista',
+                    'Exclusividade total',
                     'Suporte prioritário',
                   ].map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
@@ -196,60 +362,9 @@ export default function Planos() {
                   ))}
                 </ul>
                 <Button
-                  className="w-full gradient-highlight border-0"
-                  onClick={() => isProfessional ? handlePlanClick('mensal') : navigate('/cadastro?plano=mensal')}
-                  disabled={isProfessional && !monthlyPlan}
-                >
-                  {isProfessional && <Crown className="mr-2 h-4 w-4" />}
-                  {isProfessional ? buttonText : 'Começar 7 dias grátis'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Trimestral Plan */}
-            <Card className="relative overflow-hidden border-2 border-primary shadow-highlight">
-              <div className="absolute top-0 right-0 px-4 py-1 gradient-highlight text-white text-xs font-medium rounded-bl-lg">
-                MAIS ECONOMIA
-              </div>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <Crown className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Profissional Trimestral</h3>
-                  <p className="text-muted-foreground text-sm">Melhor custo-benefício</p>
-                </div>
-                <div className="text-center mb-6">
-                  <div className="bg-primary/5 rounded-lg p-3 mb-3">
-                    <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
-                  </div>
-                  <span className="text-3xl font-bold text-gradient-highlight">
-                    {trimestralPlan ? `R$ ${trimestralPlan.price.toFixed(2).replace('.', ',')}` : 'R$ 99,90'}
-                  </span>
-                  <span className="text-muted-foreground">/trimestre</span>
-                  {trimestralPlan && (
-                    <p className="text-sm text-primary font-medium mt-1">Economia de R$ 19,80</p>
-                  )}
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {[
-                    'Tudo do plano mensal',
-                    'Perfil em destaque nas buscas',
-                    'Selo de verificação',
-                    'Vídeo de apresentação',
-                    'Referências profissionais',
-                    'Prioridade máxima no ranking',
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full gradient-highlight border-0"
-                  onClick={() => isProfessional ? handlePlanClick('trimestral') : navigate('/cadastro?plano=trimestral')}
-                  disabled={isProfessional && !trimestralPlan}
+                  className="w-full bg-amber-500 hover:bg-amber-600 border-0"
+                  onClick={() => isProfessional ? handlePlanClick('premium') : navigate('/cadastro?plano=premium')}
+                  disabled={isProfessional && !premiumPlan}
                 >
                   {isProfessional ? <Crown className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   {isProfessional ? buttonText : 'Começar 7 dias grátis'}
@@ -275,7 +390,7 @@ export default function Planos() {
                     <span className="text-sm text-primary font-medium">🎉 7 dias GRÁTIS</span>
                   </div>
                   <span className="text-3xl font-bold text-family">
-                    {`R$ ${contratantePlanDisplay.price.toFixed(2).replace('.', ',')}`}
+                    {`R$ ${Number(contratantePlanDisplay.price).toFixed(2).replace('.', ',')}`}
                   </span>
                   <span className="text-muted-foreground">/mês</span>
                   <p className="text-xs text-muted-foreground mt-1">Renovação automática mensal</p>

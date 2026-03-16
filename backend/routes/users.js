@@ -1,177 +1,154 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const path = require('path');
-const multer = require('multer');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
 /* ============================
-   MULTER CONFIG (ADICIONADO)
-   ============================ */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/avatars');
-  },
-  filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
-
-/* ============================
-   VERIFY TOKEN (ORIGINAL)
-   ============================ */
+   VERIFY TOKEN
+============================ */
 const verifyToken = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: 'Token não fornecido.' });
+  if (!authHeader) {
+    return res.status(401).json({
+      success: false,
+      message: 'Token não fornecido.',
+    });
   }
 
+  const token = authHeader.replace('Bearer ', '');
+
   try {
-    const jwt = require('jsonwebtoken');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (error) {
-    res
-      .status(401)
-      .json({ success: false, message: 'Token inválido.' });
+  } catch {
+    return res.status(401).json({
+      success: false,
+      message: 'Token inválido.',
+    });
   }
 };
 
 /* ============================
    GET ALL USERS (ADMIN)
-   ============================ */
+============================ */
 router.get('/', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({ success: false, message: 'Acesso negado.' });
+      return res.status(403).json({ success: false, message: 'Acesso negado.' });
     }
 
     const users = await User.findAll();
     res.json({ success: true, users });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res
-      .status(500)
-      .json({ success: false, message: 'Erro interno do servidor.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erro interno.' });
   }
 });
 
 /* ============================
    GET USER BY ID
-   ============================ */
+============================ */
 router.get('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
-      return res
-        .status(403)
-        .json({ success: false, message: 'Acesso negado.' });
+    if (req.user.role !== 'admin' && req.user.id !== Number(id)) {
+      return res.status(403).json({ success: false, message: 'Acesso negado.' });
     }
 
     const user = await User.findById(id);
+
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Usuário não encontrado.' });
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
     res.json({ success: true, user });
-  } catch (error) {
-    console.error('Get user error:', error);
-    res
-      .status(500)
-      .json({ success: false, message: 'Erro interno do servidor.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erro interno.' });
   }
 });
 
 /* ============================
-   UPDATE USER (COM UPLOAD)
-   ============================ */
+   UPDATE USER + FOTO PERFIL
+============================ */
 router.put(
   '/:id',
   verifyToken,
   upload.single('profile_image'),
   async (req, res) => {
     try {
+      // ===== DEBUG AQUI =====
+      console.log('REQ.FILE =>', req.file);
+      console.log('REQ.BODY =>', req.body);
+      // ======================
+
       const { id } = req.params;
-      const updateData = req.body;
 
-      if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
-        return res
-          .status(403)
-          .json({ success: false, message: 'Acesso negado.' });
+      if (req.user.role !== 'admin' && req.user.id !== Number(id)) {
+        return res.status(403).json({ success: false, message: 'Acesso negado.' });
       }
-
-      delete updateData.password;
-      delete updateData.role;
 
       const user = await User.findById(id);
       if (!user) {
-        return res
-          .status(404)
-          .json({ success: false, message: 'Usuário não encontrado.' });
+        return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
       }
 
+      const updateData = { ...req.body };
+
+      // proteção
+      delete updateData.password;
+      delete updateData.role;
+      delete updateData.email_confirmed;
+
+      // imagem
       if (req.file) {
-        updateData.profile_image = `/uploads/avatars/${req.file.filename}`;
+        updateData.profile_image = `/uploads/${req.file.filename}`;
       }
 
-      await user.update(updateData);
+      const updatedUser = await user.update(updateData);
 
       res.json({
         success: true,
-        message: 'Usuário atualizado com sucesso!',
-        user,
+        message: 'Perfil atualizado com sucesso!',
+        user: updatedUser,
       });
-    } catch (error) {
-      console.error('Update user error:', error);
-      res
-        .status(500)
-        .json({ success: false, message: 'Erro interno do servidor.' });
+    } catch (err) {
+      console.error('Update error:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao atualizar perfil.',
+      });
     }
   }
 );
 
 /* ============================
    DELETE USER (ADMIN)
-   ============================ */
+============================ */
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({ success: false, message: 'Acesso negado.' });
+      return res.status(403).json({ success: false, message: 'Acesso negado.' });
     }
 
     const { id } = req.params;
     const user = await User.findById(id);
+
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Usuário não encontrado.' });
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
 
     await user.delete();
-    res.json({
-      success: true,
-      message: 'Usuário deletado com sucesso!',
-    });
-  } catch (error) {
-    console.error('Delete user error:', error);
-    res
-      .status(500)
-      .json({ success: false, message: 'Erro interno do servidor.' });
+
+    res.json({ success: true, message: 'Usuário deletado com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erro interno.' });
   }
 });
 

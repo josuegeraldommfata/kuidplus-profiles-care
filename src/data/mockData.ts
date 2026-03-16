@@ -1,11 +1,27 @@
+// Novos tipos de profissionais para a Kuidd+
+export type ProfessionType =
+  | 'Cuidador(a)'
+  | 'Acompanhante Hospitalar'
+  | 'Técnico(a) de Enfermagem'
+  | 'Enfermeiro(a)'
+  | 'Psicólogo(a)'
+  | 'Fonoaudiólogo(a)'
+  | 'Fisioterapeuta'
+  | 'Nutricionista'
+  | 'Terapeuta Ocupacional';
+
 // Mock Users for Authentication
 export interface User {
   id: string;
   email: string;
   password: string;
   name: string;
-  role: 'cuidador' | 'acompanhante' | 'tecnico' | 'enfermeiro' | 'contratante' | 'admin';
+  role: 'cuidador' | 'acompanhante' | 'tecnico' | 'enfermeiro' | 'psicologo' | 'fonoaudiologo' | 'fisioterapeuta' | 'nutricionista' | 'terapeuta' | 'contratante' | 'admin';
   profileImage?: string;
+  surname?: string;
+  whatsapp?: string;
+  city?: string;
+  state?: string;
 }
 
 export const mockUsers: User[] = [
@@ -43,22 +59,43 @@ export const mockUsers: User[] = [
   },
   {
     id: '5',
+    email: 'psicologo@kuid.com',
+    password: '123456',
+    name: 'Dra. Carla Souza',
+    role: 'psicologo',
+    profileImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face',
+  },
+  {
+    id: '6',
+    email: 'fisioterapeuta@kuid.com',
+    password: '123456',
+    name: 'Dr. Roberto Alves',
+    role: 'fisioterapeuta',
+    profileImage: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop&crop=face',
+  },
+  {
+    id: '7',
+    email: 'nutricionista@kuid.com',
+    password: '123456',
+    name: 'Dra. Fernanda Lima',
+    role: 'nutricionista',
+    profileImage: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&h=400&fit=crop&crop=face',
+  },
+  {
+    id: '8',
     email: 'contratante@kuid.com',
     password: '123456',
     name: 'Família Costa',
     role: 'contratante',
   },
   {
-    id: '6',
+    id: '9',
     email: 'admin@kuid.com',
     password: '123456',
     name: 'Admin KUIDD+',
     role: 'admin',
   },
 ];
-
-// Professional Categories
-export type ProfessionType = 'Cuidador(a)' | 'Acompanhante Hospitalar' | 'Técnico(a) de Enfermagem' | 'Enfermeiro(a)';
 
 // Professional Profile Interface
 export interface Professional {
@@ -429,20 +466,34 @@ export const brazilianStates = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-// Price Ranges for Filter
-export const priceRanges = [
-  { label: 'Até R$ 150', min: 0, max: 150 },
-  { label: 'R$ 150 - R$ 180', min: 150, max: 180 },
-  { label: 'R$ 180 - R$ 220', min: 180, max: 220 },
-  { label: 'R$ 220 - R$ 280', min: 220, max: 280 },
-  { label: 'R$ 280 - R$ 350', min: 280, max: 350 },
-  { label: 'Acima de R$ 350', min: 350, max: 9999 },
+// Cidades iniciais do Kuidd+
+export const kuiddPlusCities = [
+  'Campinas',
+  'São Paulo',
+  'Rio de Janeiro',
+  'Belo Horizonte',
+  'Curitiba'
 ];
 
-// Profession options
+// Price Ranges for Filter (atualizados com novos valores)
+export const priceRanges = [
+  { label: 'Até R$ 150', min: 0, max: 150 },
+  { label: 'R$ 150 - R$ 200', min: 150, max: 200 },
+  { label: 'R$ 200 - R$ 250', min: 200, max: 250 },
+  { label: 'R$ 250 - R$ 300', min: 250, max: 300 },
+  { label: 'R$ 300 - R$ 400', min: 300, max: 400 },
+  { label: 'Acima de R$ 400', min: 400, max: 9999 },
+];
+
+// Profession options - Todos os tipos de profissionais do Kuidd+
 export const professionOptions: ProfessionType[] = [
   'Cuidador(a)',
   'Acompanhante Hospitalar',
   'Técnico(a) de Enfermagem',
   'Enfermeiro(a)',
+  'Psicólogo(a)',
+  'Fonoaudiólogo(a)',
+  'Fisioterapeuta',
+  'Nutricionista',
+  'Terapeuta Ocupacional',
 ];

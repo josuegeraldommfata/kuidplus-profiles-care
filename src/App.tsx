@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import SubscriptionPrompt from "@/components/ui/SubscriptionPrompt";
+
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
@@ -13,6 +15,8 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 import Buscar from "./pages/Buscar";
 import PerfilProfissional from "./pages/PerfilProfissional";
 import DashboardProfissional from "./pages/DashboardProfissional";
+import DashboardContratante from "./pages/DashboardContratante";
+import PerfilContratante from "./pages/PerfilContratante";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import Sobre from "./pages/Sobre";
 import TermosProfissionais from "./pages/TermosProfissionais";
@@ -27,34 +31,70 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+
+            <SubscriptionPrompt />
+
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Cadastro />} />
-              <Route path="/escolha-tipo-cadastro" element={<EscolhaTipoCadastro />} />
-              <Route path="/cadastro-contratante" element={<CadastroContratante />} />
+              <Route
+                path="/escolha-tipo-cadastro"
+                element={<EscolhaTipoCadastro />}
+              />
+              <Route
+                path="/cadastro-contratante"
+                element={<CadastroContratante />}
+              />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
               <Route path="/buscar" element={<Buscar />} />
+
               <Route path="/profissional/me" element={<PerfilProfissional />} />
               <Route path="/profissional/:id" element={<PerfilProfissional />} />
-              <Route path="/dashboard-profissional" element={<DashboardProfissional />} />
-              <Route path="/admin" element={<DashboardAdmin />} />
+
+              <Route
+                path="/dashboard-profissional"
+                element={<DashboardProfissional />}
+              />
+              <Route
+                path="/dashboard-contratante"
+                element={<DashboardContratante />}
+              />
+              <Route
+                path="/perfil-contratante"
+                element={<PerfilContratante />}
+              />
+
+  <Route path="/admin" element={<DashboardAdmin />} />
+  <Route path="/dashboard-admin" element={<DashboardAdmin />} />
+
               <Route path="/sobre" element={<Sobre />} />
               <Route path="/planos" element={<Planos />} />
-              <Route path="/mercadopago-keys" element={<MercadoPagoKeys />} />
-              <Route path="/termos-profissionais" element={<TermosProfissionais />} />
-              <Route path="/termos-contratantes" element={<TermosContratantes />} />
+              <Route path="/planos/:tipo" element={<Planos />} />
+              <Route
+                path="/mercadopago-keys"
+                element={<MercadoPagoKeys />}
+              />
+              <Route
+                path="/termos-profissionais"
+                element={<TermosProfissionais />}
+              />
+              <Route
+                path="/termos-contratantes"
+                element={<TermosContratantes />}
+              />
               <Route path="/privacidade" element={<Privacidade />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

@@ -11,9 +11,18 @@ class User {
   }
 
   static async create(userData) {
-    const { email, password, role } = userData;
-    const query = 'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) RETURNING *';
-    const values = [email, password, role];
+    const { email, password, role, name } = userData;
+
+    // Define período de teste de 7 dias para contratantes e profissionais
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+
+    const query = `
+      INSERT INTO users (email, password, role, name, trial_ends_at, subscription_status)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    const values = [email, password, role, name, trialEndsAt, 'trial'];
 
     try {
       const result = await pool.query(query, values);

@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
 
 // Carrega variáveis de ambiente de .env (se existir)
 dotenv.config();

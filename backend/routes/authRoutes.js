@@ -2,15 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
-
-const pool = new Pool({
- host: process.env.DB_HOST,
- port: process.env.DB_PORT,
- database: process.env.DB_NAME,
- user: process.env.DB_USER,
- password: process.env.DB_PASSWORD,
-});
+const pool = require('../db');
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -27,7 +19,14 @@ router.post('/login', async (req, res) => {
  }
 
  const user = result.rows[0];
- const isMatch = await bcrypt.compare(password, user.password);
+
+ // Proteção contra usuário sem senha cadastrada
+ if (!user.password_hash) {
+   console.log("Usuário sem senha cadastrada:", email);
+   return res.status(401).json({ message: 'Credenciais inválidas' });
+ }
+
+ const isMatch = await bcrypt.compare(password, user.password_hash);
 
  if (!isMatch) {
  return res.status(401).json({ message: 'Credenciais inválidas' });
@@ -55,9 +54,3 @@ router.post('/login', async (req, res) => {
 });
 
 module.exports = router;
-No server.js você deve ter algo assim (confirma):
-
-const authRoutes = require('./routes/authRoutes');
-
-app.use(express.json());
-app.use('/api/auth', authRoutes);

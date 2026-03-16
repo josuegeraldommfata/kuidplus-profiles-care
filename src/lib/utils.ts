@@ -10,9 +10,9 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * URL base do backend
- * (produção)
+ * (produção ou localhost)
  */
-export const API_URL = "https://kuiddmais.com.br";
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 /**
  * Monta URL completa para arquivos vindos do backend

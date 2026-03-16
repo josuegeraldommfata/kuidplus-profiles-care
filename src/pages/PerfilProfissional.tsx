@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/StarRating';
+import { ReviewsTimeline } from '@/components/ui/ReviewsTimeline';
 import api from '@/lib/api';
 import { getFileUrl } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -233,14 +234,6 @@ export default function PerfilProfissional() {
                       </div>
                     )}
                   </div>
-                  {professional.videoUrl && (
-                    <div className="p-4">
-                      <video controls width="100%" style={{ maxWidth: 400, borderRadius: 8 }}>
-                        <source src={professional.videoUrl} type="video/mp4" />
-                        Seu navegador não suporta vídeo.
-                      </video>
-                    </div>
-                  )}
                   <CardContent className="p-6 flex-1">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
@@ -319,16 +312,7 @@ export default function PerfilProfissional() {
                     <div className="flex gap-3">
                       <Button
                         size="lg"
-                        variant="outline"
-                        className="flex-1 md:flex-none"
-                        onClick={handleChatClick}
-                      >
-                        <MessageCircle className="mr-2 h-5 w-5" />
-                        Enviar Mensagem
-                      </Button>
-                      <Button
-                        size="lg"
-                        className={`flex-1 md:flex-none ${professional.isHighlighted ? 'gradient-highlight border-0' : ''}`}
+                        className={`flex-1 md:flex-none gradient-highlight border-0`}
                         onClick={handleWhatsAppClick}
                       >
                         <MessageCircle className="mr-2 h-5 w-5" />
@@ -348,17 +332,6 @@ export default function PerfilProfissional() {
                         ))
                       )}
                     </div>
-
-                    <div className="mt-2">
-                      <span className="font-medium">WhatsApp: </span>
-                      {professional.whatsapp ? (
-                        <a href={`https://wa.me/${professional.whatsapp}`} target="_blank" rel="noopener noreferrer">
-                          {professional.whatsapp}
-                        </a>
-                      ) : (
-                        'Não informado'
-                      )}
-                    </div>
                   </CardContent>
                 </div>
               </Card>
@@ -374,21 +347,43 @@ export default function PerfilProfissional() {
                     }
                   </p>
                   {!professional.isHighlighted && professional.bio.length > 150 && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">
+                    <p class="text-xs text-muted-foreground mt-2 italic">
                       Profissionais em destaque mostram descrição completa
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Courses & Certificates - Only for highlighted */}
-              {professional.isHighlighted && (
-                <Card className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+              {/* Video Presentation */}
+              {professional.videoUrl && (
+                <Card className="animate-fade-in" style={{ animationDelay: '125ms' }}>
                   <CardContent className="p-6">
                     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Award className="w-5 h-5 text-gradient-highlight" />
-                      Formações e Cursos
+                      <Play className="w-5 h-5 text-gradient-highlight" />
+                      Vídeo de Apresentação
                     </h2>
+                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                      <video
+                        controls
+                        className="w-full h-full object-cover"
+                        poster={professional.profileImage || '/placeholder.svg'}
+                      >
+                        <source src={professional.videoUrl} type="video/mp4" />
+                        Seu navegador não suporta vídeo.
+                      </video>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Courses & Certificates */}
+              <Card className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-gradient-highlight" />
+                    Formações e Cursos
+                  </h2>
+                  {professional.courses && professional.courses.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mb-6">
                       {professional.courses.map((course, index) => (
                         <Badge key={index} variant="secondary">
@@ -396,21 +391,59 @@ export default function PerfilProfissional() {
                         </Badge>
                       ))}
                     </div>
+                  ) : (
+                    <p className="text-muted-foreground mb-6">Nenhuma formação informada</p>
+                  )}
 
-                    <h3 className="font-medium mb-3 flex items-center gap-2">
-                      <FileCheck className="w-4 h-4 text-gradient-highlight" />
-                      Certificados
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
+                  <h3 className="font-medium mb-3 flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-gradient-highlight" />
+                    Certificados
+                  </h3>
+                  {professional.certificates && professional.certificates.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {professional.certificates.map((cert, index) => (
-                        <Badge key={index} variant="outline">
-                          {cert.name}
-                        </Badge>
+                        <div key={index} className="border rounded-lg p-3 hover:shadow-md transition-shadow">
+                          {cert.file ? (
+                            <a
+                              href={cert.file}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <img
+                                src={cert.file}
+                                alt={cert.name || 'Certificado'}
+                                className="w-full h-24 object-cover rounded mb-2"
+                                onError={(e) => {
+                                  // If image fails to load, show a document icon
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    const icon = document.createElement('div');
+                                    icon.className = 'w-full h-24 bg-muted rounded mb-2 flex items-center justify-center';
+                                    icon.innerHTML = '<svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                                    parent.insertBefore(icon, target);
+                                  }
+                                }}
+                              />
+                              <p className="text-xs text-center text-muted-foreground truncate">
+                                {cert.name || 'Certificado'}
+                              </p>
+                            </a>
+                          ) : (
+                            <div className="w-full h-24 bg-muted rounded mb-2 flex items-center justify-center">
+                              <FileCheck className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  ) : (
+                    <p className="text-muted-foreground">Nenhum certificado informado</p>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* References - Only for highlighted */}
               {professional.isHighlighted && professional.references && professional.references.length > 0 && (
@@ -538,7 +571,15 @@ export default function PerfilProfissional() {
                     <p className="text-sm text-white/80 mb-4">
                       Vídeo, referências, selo verificado e mais visibilidade!
                     </p>
-                    <Button variant="secondary" size="sm">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        if (user && ['cuidador', 'acompanhante', 'enfermeiro', 'tecnico'].includes(user.role)) {
+                          navigate('/planos');
+                        }
+                      }}
+                    >
                       Saiba mais
                     </Button>
                   </CardContent>

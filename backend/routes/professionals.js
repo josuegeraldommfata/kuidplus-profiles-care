@@ -6,6 +6,8 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { checkSubscription } = require('../middleware/subscription');
+
 
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
@@ -57,14 +59,19 @@ const storage = multer.diskStorage({
 const upload = multer({
  storage,
  fileFilter: (req, file, cb) => {
- // Permitir apenas JPG e PNG para foto de perfil e certificados
- if (
- (file.fieldname === 'profilePhoto' || file.fieldname === 'certificates') &&
- !['image/jpeg', 'image/png', 'image/jpg'].includes(file.mimetype)
- ) {
- return cb(new Error('Apenas arquivos JPG e PNG são permitidos para foto de perfil e certificados!'), false);
+ // Foto de perfil: apenas imagens
+ if (file.fieldname === 'profilePhoto' && !['image/jpeg', 'image/png', 'image/jpg'].includes(file.mimetype)) {
+ return cb(new Error('Apenas arquivos JPG e PNG são permitidos para foto de perfil!'), false);
  }
- // Permitir apenas MP4 para vídeo de apresentação
+ // Certificados: imagens E PDF
+ if (file.fieldname === 'certificates' && !['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'].includes(file.mimetype)) {
+ return cb(new Error('Apenas arquivos JPG, PNG e PDF são permitidos para certificados!'), false);
+ }
+ // Antecedentes criminais: apenas PDF
+ if (file.fieldname === 'background_check_file' && file.mimetype !== 'application/pdf') {
+ return cb(new Error('Apenas arquivos PDF são permitidos para antecedentes criminais!'), false);
+ }
+ // Vídeo de apresentação: apenas MP4
  if (file.fieldname === 'video' && file.mimetype !== 'video/mp4') {
  return cb(new Error('Apenas arquivos MP4 são permitidos para vídeo de apresentação!'), false);
  }
@@ -73,7 +80,7 @@ const upload = multer({
 });
 
 // Get professionals with optional pagination, search and highlighted filter
-router.get('/', async (req, res) => {
+router.get('/', checkSubscription, async (req, res) => {
   try {
     const {
       page = '1',
@@ -185,6 +192,13 @@ router.get('/me/profile', authenticateToken, async (req, res) => {
         profile.certificates = [];
       }
     }
+    if (profile.courses && typeof profile.courses === 'string') {
+      try {
+        profile.courses = JSON.parse(profile.courses);
+      } catch (e) {
+        profile.courses = [];
+      }
+    }
     if (profile.hospitals && typeof profile.hospitals === 'string') {
       try {
         profile.hospitals = JSON.parse(profile.hospitals);
@@ -238,6 +252,14 @@ router.get('/:id', async (req, res) => {
  if (typeof c === 'object' && c.file) return c;
  return null;
  }).filter(Boolean);
+ }
+
+ if (profile.courses && typeof profile.courses === 'string') {
+ try {
+ profile.courses = JSON.parse(profile.courses);
+ } catch (e) {
+ profile.courses = [];
+ }
  }
 
  if (profile.hospitals && typeof profile.hospitals === 'string') {
@@ -431,7 +453,9 @@ router.put('/update', authenticateToken, upload.fields([
  whatsapp: 'whatsapp',
  profession: 'profession',
  sex: 'sex',
- region: 'region'
+ region: 'region',
+ availability: 'availability',
+ courses: 'courses'
  };
 
  // Get current professional data for merging
@@ -466,6 +490,11 @@ router.put('/update', authenticateToken, upload.fields([
  fields.push(dbField + ' = $' + paramIndex);
  const hospitalsArray = typeof value === 'string' ? value.split(',').map(h => h.trim()) : value;
  values.push(JSON.stringify(hospitalsArray));
+ paramIndex++;
+ } else if (key === 'courses') {
+ fields.push(dbField + ' = $' + paramIndex);
+ const coursesArray = typeof value === 'string' ? JSON.parse(value) : value;
+ values.push(JSON.stringify(coursesArray));
  paramIndex++;
  } else {
  fields.push(dbField + ' = $' + paramIndex);
@@ -502,6 +531,64 @@ router.delete('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Professional not found' });
     res.json({ message: 'Professional deleted' });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get reviews for a contractor (reviews given by professionals to contractors)
+router.get('/contractor/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`
+      SELECT r.*, u.name as reviewer_name, u.profile_image as reviewer_image
+      FROM reviews r
+      JOIN users u ON r.reviewer_id = u.id
+      WHERE r.reviewee_id = $1 AND r.reviewee_role = 'contratante'
+      ORDER BY r.created_at DESC
+    `, [id]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get contractor reviews error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Submit review for a contractor (by a professional)
+router.post('/contractor/:id/reviews', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const reviewerId = req.user.id;
+
+    // Verify reviewer is a professional
+    const reviewerCheck = await pool.query(`
+      SELECT role FROM users WHERE id = $1
+    `, [reviewerId]);
+
+    if (reviewerCheck.rows[0]?.role !== 'profissional') {
+      return res.status(403).json({ error: 'Only professionals can review contractors' });
+    }
+
+    // Check if review already exists
+    const existingReview = await pool.query(`
+      SELECT id FROM reviews WHERE reviewer_id = $1 AND reviewee_id = $2
+    `, [reviewerId, id]);
+
+    if (existingReview.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already reviewed this contractor' });
+    }
+
+    // Insert review
+    const result = await pool.query(`
+      INSERT INTO reviews (reviewer_id, reviewee_id, reviewer_role, reviewee_role, rating, comment)
+      VALUES ($1, $2, 'profissional', 'contratante', $3, $4)
+      RETURNING *
+    `, [reviewerId, id, rating, comment || null]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Submit contractor review error:', error);
     res.status(500).json({ error: error.message });
   }
 });

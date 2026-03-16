@@ -1,9 +1,10 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '..', 'uploads', );
+const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -14,9 +15,10 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    // Generate unique filename with timestamp
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+    // Generate unique filename with timestamp and crypto hash
+    const ext = path.extname(file.originalname);
+    const hash = crypto.randomBytes(8).toString('hex');
+    cb(null, `avatar-${Date.now()}-${hash}${ext}`);
   }
 });
 

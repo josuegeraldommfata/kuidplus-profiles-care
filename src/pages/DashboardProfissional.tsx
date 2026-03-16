@@ -78,9 +78,23 @@ interface Professional {
   background_check_notes: string | null;
 }
 
+interface Proposal {
+  id: number;
+  title: string;
+  description?: string;
+  profession?: string;
+  city?: string;
+  state?: string;
+  contractor_id?: number;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  created_at?: string;
+}
+
 export default function DashboardProfissional() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('profile');
 
   const [userData, setUserData] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -108,7 +122,12 @@ export default function DashboardProfissional() {
     profession: myProfile?.profession || '',
     sex: myProfile?.sex || '',
     region: myProfile?.region || '',
+    availability: myProfile?.availability || 'ambos',
   });
+
+  // Estado para cursos
+  const [courses, setCourses] = useState<string[]>(myProfile?.courses || []);
+  const [newCourse, setNewCourse] = useState('');
 
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
@@ -116,6 +135,10 @@ export default function DashboardProfissional() {
   const [certificateFiles, setCertificateFiles] = useState<File[] | null>(null);
   // Adicionar estado para vídeo
   const [videoFile, setVideoFile] = useState<File | null>(null);
+
+  // Proposals (vagas) for professionals
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [loadingProposals, setLoadingProposals] = useState(false);
 
   // useEffect para buscar dados do usuário logado
   useEffect(() => {
@@ -166,6 +189,7 @@ export default function DashboardProfissional() {
           profession: response.data?.profession || '',
           sex: response.data?.sex || '',
           region: response.data?.region || '',
+          availability: response.data?.availability || 'ambos',
         });
       } catch (error) {
         console.error('Erro ao buscar perfil profissional:', error);
@@ -182,7 +206,7 @@ export default function DashboardProfissional() {
     fetchProfile();
   }, [user?.id]);
 
-  // update formData when myProfile loads
+  // update formData and courses when myProfile loads
   useEffect(() => {
     if (myProfile) {
       setFormData({
@@ -200,8 +224,7 @@ export default function DashboardProfissional() {
         sex: myProfile.sex || '',
         region: myProfile.region || '',
       });
-      // set preview to existing image
-      if (myProfile.profile_image) setProfilePhotoPreview(myProfile.profile_image);
+      setCourses(myProfile.courses || []);
     }
   }, [myProfile]);
 
@@ -224,6 +247,41 @@ export default function DashboardProfissional() {
     };
   }, [profilePhotoPreview]);
 
+  // Fetch recommended proposals when profile is available
+  useEffect(() => {
+    const fetchProposals = async () => {
+      if (!myProfile) return;
+      setLoadingProposals(true);
+      try {
+        const res = await api.get('/api/proposals', {
+          params: { profession: myProfile.profession, city: myProfile.city, limit: 10 }
+        });
+        setProposals(res.data.items || []);
+      } catch (e) {
+        console.error('Erro ao buscar propostas:', e);
+      } finally {
+        setLoadingProposals(false);
+      }
+    };
+
+    fetchProposals();
+  }, [myProfile]);
+
+  const applyToProposal = async (p: Proposal) => {
+    const message = window.prompt('Mensagem para o contratante (apresente-se):');
+    if (message === null) return;
+    const expectedBudgetStr = window.prompt('Orçamento esperado (opcional)');
+    const expectedBudget = expectedBudgetStr ? parseFloat(expectedBudgetStr) : null;
+    try {
+      await api.post(`/api/proposals/${p.id}/apply`, { message, expectedBudget });
+      alert('Aplicação enviada! Abrindo chat...');
+      navigate(`/chat?proposalId=${p.id}`);
+    } catch (e) {
+      console.error('Erro ao aplicar na proposta:', e);
+      alert('Erro ao aplicar na proposta');
+    }
+  };
+
   const handleBackgroundCheckChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (file) setBackgroundCheckFile(file);
@@ -245,6 +303,10 @@ export default function DashboardProfissional() {
     Object.entries(formData).forEach(([k, v]) => {
       if (v !== undefined && v !== null) payload.append(k, String(v));
     });
+    // Add courses as JSON string
+    if (courses.length > 0) {
+      payload.append('courses', JSON.stringify(courses));
+    }
     if (profilePhotoFile) payload.append('profilePhoto', profilePhotoFile);
     if (backgroundCheckFile) payload.append('background_check_file', backgroundCheckFile);
     if (certificateFiles && certificateFiles.length > 0) {
@@ -269,7 +331,10 @@ export default function DashboardProfissional() {
         }
 
         alert('Perfil salvo com sucesso!');
-        // Reset file states but keep preview to updated image url
+        setActiveTab('profile'); // Redirect to profile tab
+        // 🔥 limpa preview blob
+        setProfilePhotoPreview(null);
+        // Reset file states
         setProfilePhotoFile(null);
         setBackgroundCheckFile(null);
         setCertificateFiles(null);
@@ -393,10 +458,15 @@ export default function DashboardProfissional() {
                   Perfil Destaque
                 </Badge>
               ) : (
-                <Button variant="outline" size="sm" className="text-gradient-highlight border-2">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Ativar Destaque
-                </Button>
+                <Button
+  variant="outline"
+  size="sm"
+  className="text-gradient-highlight border-2"
+  onClick={() => navigate("/planos")}
+>
+  <Sparkles className="w-4 h-4 mr-2" />
+  Ativar Destaque
+</Button>
               )}
               {myProfile?.status && getStatusBadge(myProfile.status)}
               {myProfile?.id && (
@@ -411,46 +481,68 @@ export default function DashboardProfissional() {
             </div>
           </div>
 
-          {/* KUID+ Presentation Video */}
-          <Card className="mb-8 overflow-hidden border-2 border-dashed">
-            <CardContent className="p-0">
-              <div className="grid md:grid-cols-2 gap-0">
-                <div className="aspect-video bg-muted flex items-center justify-center">
-                  <div className="text-center p-6">
-                    <div className="w-16 h-16 rounded-full gradient-highlight flex items-center justify-center mx-auto mb-4">
-                      <Play className="w-6 h-6 text-white ml-1" />
+          {/* Vagas recomendadas para seu perfil */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Vagas recomendadas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingProposals ? (
+                <p>Carregando vagas...</p>
+              ) : proposals.length === 0 ? (
+                <p>Nenhuma vaga encontrada no momento.</p>
+              ) : (
+                <div className="space-y-3">
+                  {proposals.map((p) => (
+                    <div key={p.id} className="p-3 border rounded flex justify-between items-start gap-4">
+                      <div>
+                        <div className="font-semibold">{p.title}</div>
+                        <div className="text-sm text-muted-foreground">{p.description ? p.description.substring(0, 200) : ''}</div>
+                        <div className="text-xs text-muted-foreground mt-2">Profissão: {p.profession} • {p.city}{p.state ? ` (${p.state})` : ''}</div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button onClick={() => applyToProposal(p)}>Aplicar</Button>
+                        <Button variant="outline" onClick={() => navigate(`/chat?proposalId=${p.id}`)}>Chat</Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Vídeo de apresentação KUID+
-                    </p>
-                  </div>
+                  ))}
                 </div>
-                <div className="p-6 flex flex-col justify-center">
-                  <h3 className="text-lg font-semibold mb-2">
-                    <span className="text-gradient-highlight">Benefícios KUID+</span>
-                  </h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
-                      Visibilidade para milhares de famílias
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
-                      Contato direto via WhatsApp
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5" />
-                      Selo de verificação de antecedentes
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-purple-500 mt-0.5" />
-                      Perfil Destaque: prioridade na busca + vídeo + referências
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* KUID+ Presentation Video */}
+          <Card className="mb-8 overflow-hidden border-2 border-dashed">
+  <CardContent className="p-0">
+    <div className="p-6">
+      <h3 className="text-lg font-semibold mb-4">
+        <span className="text-gradient-highlight">Benefícios KUID+</span>
+      </h3>
+
+      <ul className="space-y-2 text-sm text-muted-foreground">
+        <li className="flex items-start gap-2">
+          <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+          Visibilidade para milhares de famílias
+        </li>
+
+        <li className="flex items-start gap-2">
+          <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+          Contato direto via WhatsApp
+        </li>
+
+        <li className="flex items-start gap-2">
+          <CheckCircle className="w-4 h-4 text-success mt-0.5" />
+          Selo de verificação de antecedentes
+        </li>
+
+        <li className="flex items-start gap-2">
+          <Sparkles className="w-4 h-4 text-purple-500 mt-0.5" />
+          Perfil Destaque: prioridade na busca + referências
+        </li>
+      </ul>
+    </div>
+  </CardContent>
+</Card>
 
           {/* Stats */}
           <div className="grid sm:grid-cols-4 gap-4 mb-8">
@@ -461,7 +553,7 @@ export default function DashboardProfissional() {
                     <MessageCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{myProfile.whatsapp_clicks}</p>
+                    <p className="text-2xl font-bold">{myProfile?.whatsapp_clicks ?? 0}</p>
                     <p className="text-sm text-muted-foreground">
                       Cliques no WhatsApp
                     </p>
@@ -545,8 +637,12 @@ export default function DashboardProfissional() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                       <img
-                        src={myProfile.profile_image || '/placeholder.svg'}
-                        alt={myProfile.name}
+                        src={
+                          myProfile?.profile_image
+                            ? getFileUrl(myProfile.profile_image)
+                            : '/placeholder.svg'
+                        }
+                        alt={myProfile?.name || 'Perfil'}
                         className="w-20 h-20 rounded-xl object-cover"
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
@@ -579,7 +675,7 @@ export default function DashboardProfissional() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Região</p>
-                        <p className="font-medium">{myProfile?.region || 'Região não informada'}</p>
+                        <p className="font-medium">{myProfile?.region || myProfile?.city || 'Região não informada'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">WhatsApp</p>
@@ -609,7 +705,7 @@ export default function DashboardProfissional() {
                         <MapPin className="w-5 h-5 text-gradient-highlight" />
                         <span>{myProfile?.service_area || 'Área não informada'}</span>
                       </div>
-                      {myProfile.service_radius && (
+                      {myProfile?.service_radius != null && (
                         <div className="p-4 bg-muted rounded-lg">
                           <p className="text-sm text-muted-foreground mb-2">Raio de atendimento</p>
                           <p className="text-2xl font-bold text-gradient-highlight">{myProfile.service_radius} km</p>
@@ -623,7 +719,7 @@ export default function DashboardProfissional() {
                           {myProfile?.availability === 'ambos' && 'Hospital e Domicílio'}
                         </Badge>
                       </div>
-                      {myProfile.hospitals && myProfile.hospitals.length > 0 && (
+                      {myProfile?.hospitals && myProfile.hospitals.length > 0 && (
                         <div>
                           <p className="text-sm text-muted-foreground mb-2">Hospitais</p>
                           <div className="flex flex-wrap gap-2">
@@ -647,14 +743,16 @@ export default function DashboardProfissional() {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Cursos</p>
-                        {myProfile?.courses && myProfile.courses.length > 0 && (
+                        {courses && courses.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {myProfile.courses.map((course, i) => (
+                            {courses.map((course, i) => (
                               <Badge key={i} variant="secondary">
                                 {course}
                               </Badge>
                             ))}
                           </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Nenhum curso informado</p>
                         )}
                       </div>
                       <div>
@@ -711,11 +809,16 @@ export default function DashboardProfissional() {
                       <img
                         src={
                           profilePhotoPreview
-                            ? profilePhotoPreview
-                            : myProfile.profile_image || '/placeholder.svg'
+                            ? profilePhotoPreview // blob TEMPORÁRIO
+                            : myProfile?.profile_image
+                              ? getFileUrl(myProfile.profile_image) // URL REAL
+                              : '/placeholder.svg'
                         }
-                        alt={myProfile.name}
+                        alt={myProfile?.name || 'Perfil'}
                         className="w-20 h-20 rounded-xl object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                        }}
                       />
                       <div>
                         <Input
@@ -893,6 +996,21 @@ export default function DashboardProfissional() {
                     </div>
                   </div>
 
+                  {/* Availability */}
+                  <div className="space-y-2">
+                    <Label htmlFor="availability">Disponibilidade</Label>
+                    <select
+                      id="availability"
+                      value={formData.availability}
+                      onChange={(e) => setFormData((f) => ({ ...f, availability: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="hospital">Hospitais</option>
+                      <option value="domicilio">Domicílio</option>
+                      <option value="ambos">Hospital e Domicílio</option>
+                    </select>
+                  </div>
+
                   {/* Hospitals */}
                   <div className="space-y-2">
                     <Label htmlFor="hospitals">
@@ -924,6 +1042,59 @@ export default function DashboardProfissional() {
                         value={formData.priceMax}
                         onChange={(e) => setFormData((f) => ({ ...f, priceMax: e.target.value }))}
                       />
+                    </div>
+                  </div>
+
+                  {/* Courses */}
+                  <div className="space-y-2">
+                    <Label>Formações e Cursos</Label>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Digite o nome do curso ou formação"
+                          value={newCourse}
+                          onChange={(e) => setNewCourse(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (newCourse.trim()) {
+                                setCourses([...courses, newCourse.trim()]);
+                                setNewCourse('');
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            if (newCourse.trim()) {
+                              setCourses([...courses, newCourse.trim()]);
+                              setNewCourse('');
+                            }
+                          }}
+                        >
+                          Adicionar
+                        </Button>
+                      </div>
+                      {courses.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {courses.map((course, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                              {course}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCourses(courses.filter((_, i) => i !== index));
+                                }}
+                                className="ml-1 text-muted-foreground hover:text-destructive"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
