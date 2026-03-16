@@ -223,6 +223,7 @@ export default function DashboardProfissional() {
         profession: myProfile.profession || '',
         sex: myProfile.sex || '',
         region: myProfile.region || '',
+        availability: myProfile.availability || '',
       });
       setCourses(myProfile.courses || []);
     }

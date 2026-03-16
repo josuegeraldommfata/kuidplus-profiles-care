@@ -7,6 +7,8 @@ interface StarRatingProps {
   size?: 'sm' | 'md' | 'lg';
   showCount?: boolean;
   className?: string;
+  interactive?: boolean;
+  onRatingChange?: (rating: number) => void;
 }
 
 export function StarRating({
@@ -15,6 +17,8 @@ export function StarRating({
   size = 'md',
   showCount = true,
   className,
+  interactive = false,
+  onRatingChange,
 }: StarRatingProps) {
   const sizes = {
     sm: 'w-3 h-3',
