@@ -1,4 +1,11 @@
-@import '@fontsource/outfit/400.css';\n@import '@fontsource/outfit/500.css';\n@import '@fontsource/outfit/600.css';\n@import '@fontsource/outfit/700.css';\n\n@tailwind base;\n@tailwind components;\n@tailwind utilities;\n
+@import '@fontsource/outfit/400.css';
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/600.css';
+@import '@fontsource/outfit/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -154,3 +161,4 @@
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .shadow-highlight { box-shadow: var(--shadow-highlight); }
 }
+

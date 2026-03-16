@@ -1,8 +1,8 @@
-# TODO: Execução Separada Frontend/Backend
+# TODO - Correção do erro CSS
 
-- [x] 1. Analisar estrutura e configs (package.json, vite.config.ts)\n- [x] 2. Editar package.json (ajustar scripts dev)"
-- [x] 3. Atualizar README.md com instruções claras
-- [x] 4. Testar: backend && frontend separados (confirmado pelo user)\n- [x] 5. Completar tarefa (separação OK, novo problema: login mock users)
+- [x] 1. Editar src/index.css para corrigir imports das fontes (remover \n literais)
+- [ ] 2. Testar servidor Vite (bun dev ou npm run dev)
+- [ ] 3. Concluir tarefa
 
 - [x] Fonoaudiólogo(a)
 - [x] Fisioterapeuta
