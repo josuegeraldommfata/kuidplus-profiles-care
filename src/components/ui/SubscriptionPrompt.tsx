@@ -76,8 +76,8 @@ export function SubscriptionPrompt() {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-orange-600" />
+          <div className="mx-auto mb-4 w-12 h-12 bg-accent rounded-full flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
           </div>
           <CardTitle className="text-xl">
             Período Gratuito Expirou
@@ -89,8 +89,8 @@ export function SubscriptionPrompt() {
             Seu período gratuito de 7 dias terminou. Para continuar usando a plataforma, assine um plano.
           </p>
 
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium">
+          <div className="bg-accent p-3 rounded-lg">
+            <p className="text-sm text-accent-foreground font-medium">
               Plano necessário:{' '}
               <span className="font-bold">{planRequired}</span>
             </p>
