@@ -158,6 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? new Date(user.trial_ends_at)
       : null;
 
+    // Se tem assinatura ativa, nunca precisa de upgrade
+    if (user.subscription_status === 'active') {
+      return { needsUpgrade: false, daysLeft: 0, planRequired: '' };
+    }
+
     let daysLeft = 0;
     if (trialEndsAt) {
       daysLeft = Math.ceil(
@@ -166,31 +171,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
+    // Se está no trial e ainda tem dias restantes, NÃO precisa de upgrade
+    if (user.subscription_status === 'trial' && daysLeft > 0) {
+      return { needsUpgrade: false, daysLeft, planRequired: '' };
+    }
+
+    // Só precisa de upgrade se: trial expirou OU status é 'expired'
     let needsUpgrade = false;
     let planRequired = '';
 
-    if (user.role === 'contratante') {
-      if (user.subscription_status === 'trial' && daysLeft <= 0) {
-        needsUpgrade = true;
-        planRequired = 'Contratante (Familiar)';
-      } else if (
-        user.subscription_status === 'expired' ||
-        !user.plan_type
-      ) {
-        needsUpgrade = true;
-        planRequired = 'Contratante (Familiar)';
-      }
-    } else {
-      if (user.subscription_status === 'trial' && daysLeft <= 0) {
-        needsUpgrade = true;
-        planRequired = 'Mensal ou Trimestral';
-      } else if (
-        user.subscription_status === 'expired' ||
-        !user.plan_type
-      ) {
-        needsUpgrade = true;
-        planRequired = 'Mensal ou Trimestral';
-      }
+    const trialExpired = user.subscription_status === 'trial' && daysLeft <= 0;
+    const isExpired = user.subscription_status === 'expired';
+
+    if (trialExpired || isExpired) {
+      needsUpgrade = true;
+      planRequired = user.role === 'contratante'
+        ? 'Contratante (Familiar)'
+        : 'Mensal ou Trimestral';
     }
 
     return {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,9 @@ type SubscriptionStatus = {
   planRequired: string;
 };
 
+const DISMISS_KEY = 'kuid_subscription_dismissed_at';
+const DISMISS_COOLDOWN_HOURS = 24; // Só mostra novamente após 24h do dismiss
+
 export function SubscriptionPrompt() {
   const { user, checkSubscriptionStatus } = useAuth();
   const navigate = useNavigate();
@@ -18,15 +21,26 @@ export function SubscriptionPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
 
-  // Determina qual plano o usuário deve ver baseado no role
   const getPlanType = () => {
     if (!user) return 'contratante';
-
-    // Se é contratante, vai para plano contratante
     if (user.role === 'contratante') return 'contratante';
-
-    // Se é profissional, vai para profissional (plano pago)
     return 'profissional';
+  };
+
+  const wasDismissedRecently = useCallback(() => {
+    const dismissedAt = localStorage.getItem(DISMISS_KEY);
+    if (!dismissedAt) return false;
+
+    const dismissedTime = new Date(dismissedAt).getTime();
+    const now = Date.now();
+    const hoursSinceDismiss = (now - dismissedTime) / (1000 * 60 * 60);
+
+    return hoursSinceDismiss < DISMISS_COOLDOWN_HOURS;
+  }, []);
+
+  const handleDismiss = () => {
+    localStorage.setItem(DISMISS_KEY, new Date().toISOString());
+    setShowPrompt(false);
   };
 
   useEffect(() => {
@@ -37,53 +51,46 @@ export function SubscriptionPrompt() {
     }
 
     const result = checkSubscriptionStatus();
-    if (!result) {
+    if (!result || !result.needsUpgrade) {
       setShowPrompt(false);
       setStatus(null);
       return;
     }
 
+    // Se o usuário fechou recentemente, não mostra de novo
+    if (wasDismissedRecently()) {
+      setStatus(result);
+      setShowPrompt(false);
+      return;
+    }
+
     setStatus(result);
-    setShowPrompt(result.needsUpgrade === true);
-  }, [user, checkSubscriptionStatus]);
+    setShowPrompt(true);
+  }, [user, checkSubscriptionStatus, wasDismissedRecently]);
 
   if (!showPrompt || !status) return null;
 
   const { daysLeft, planRequired } = status;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-orange-600" />
+          <div className="mx-auto mb-4 w-12 h-12 bg-accent rounded-full flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
           </div>
           <CardTitle className="text-xl">
-            {daysLeft <= 0
-              ? 'Período Gratuito Expirou'
-              : 'Período Gratuito Acabando'}
+            Período Gratuito Expirou
           </CardTitle>
         </CardHeader>
 
         <CardContent className="text-center space-y-4">
-          {daysLeft > 0 && (
-            <div className="flex items-center justify-center gap-2 text-orange-600">
-              <Clock className="w-4 h-4" />
-              <span className="font-medium">
-                {daysLeft} dia{daysLeft !== 1 ? 's' : ''} restante
-                {daysLeft !== 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-
-          <p className="text-gray-600">
-            {daysLeft <= 0
-              ? 'Seu período gratuito terminou. Para continuar usando a plataforma, assine um plano.'
-              : 'Seu período gratuito está acabando. Assine um plano para continuar usando todos os recursos.'}
+          <p className="text-muted-foreground">
+            Seu período gratuito de 7 dias terminou. Para continuar usando a plataforma, assine um plano.
           </p>
 
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium">
+          <div className="bg-accent p-3 rounded-lg">
+            <p className="text-sm text-accent-foreground font-medium">
               Plano necessário:{' '}
               <span className="font-bold">{planRequired}</span>
             </p>
@@ -100,7 +107,7 @@ export function SubscriptionPrompt() {
 
             <Button
               variant="outline"
-              onClick={() => setShowPrompt(false)}
+              onClick={handleDismiss}
               className="flex-1"
             >
               Depois
