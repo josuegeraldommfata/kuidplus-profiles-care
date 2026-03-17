@@ -39,7 +39,6 @@ import ProcurarTurnos from "./pages/marketplace/ProcurarTurnos";
 import Mensagens from "./pages/Mensagens";
 import DashboardProfissionalAgenda from "./pages/DashboardProfissionalAgenda";
 import MarketplaceMeusServicos from "./pages/marketplace/MeusServicos";
-import ContractorMarketplaceSidebar from "@/components/ContractorMarketplaceSidebar";
 
 
 const queryClient = new QueryClient();
