@@ -69,7 +69,7 @@ export default function DashboardProfissionalAgenda() {
 
     try {
       const response = await api.post('/api/availabilities', {
-        professional_id: user.id,
+        professional_id: user?.id,
         date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: startTime,
         end_time: endTime,
