@@ -30,8 +30,6 @@ import MercadoPagoKeys from "./pages/MercadoPagoKeys";
 // Marketplace pages
 import PostarServico from "./pages/marketplace/PostarServico";
 import ServicosDisponiveis from "./pages/marketplace/ServicosDisponiveis";
-// MeusServicos (API) - usado em rotas do contratante
-import MeusServicosApi from "./pages/MeusServicos";
 import ServicoDetalhes from "./pages/marketplace/ServicoDetalhes";
 import DashboardProfissionalMarketplace from "./pages/marketplace/DashboardProfissionalMarketplace";
 import DashboardContratanteMarketplace from "./pages/marketplace/DashboardContratanteMarketplace";
