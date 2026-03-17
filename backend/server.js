@@ -9,120 +9,103 @@ const { Server: IOServer } = require('socket.io');
 
 const pool = require('./db');
 
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const professionalRoutes = require('./routes/professionals');
-const paymentRoutes = require('./routes/payments');
-const mpRoutes = require('./routes/mercadopago');
-const reviewRoutes = require('./routes/reviews');
-const scheduleRoutes = require('./routes/schedules');
-const contractRoutes = require('./routes/contracts');
-const statsRoutes = require('./routes/stats');
-const proposalsRoutes = require('./routes/proposals');
-const messagesRoutes = require('./routes/messages');
-
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Segurança básica
+// Middleware
 app.use(helmet());
-
-// Logs HTTP
 app.use(morgan('dev'));
-
-// CORS (ajuste FRONTEND_URL no .env)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+  credentials: true
 }));
-
-// Body parser
 app.use(express.json({ limit: '10mb' }));
-
-// Arquivos enviados
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Rotas
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/professionals', professionalRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/mercadopago', mpRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/schedules', scheduleRoutes);
-app.use('/api/contracts', contractRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/proposals', proposalsRoutes);
-app.use('/api/messages', messagesRoutes);
-
-// Teste simples
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Server is working!' });
-});
-
-// Health check (com banco)
+// Health check primeiro
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
     res.json({ status: 'OK', database: 'connected' });
   } catch (err) {
-    res.status(500).json({
-      status: 'ERROR',
-      database: 'disconnected',
-    });
+    res.status(500).json({ status: 'ERROR', database: 'disconnected' });
   }
 });
 
-// Erro global
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({
-    error: 'Internal server error',
-  });
+app.get('/api/test', (req, res) => res.json({ message: 'Server OK' }));
+
+// Register routes with individual try/catch
+const routes = [
+  { path: '/api/auth', file: './routes/auth' },
+  { path: '/api/users', file: './routes/users' },
+  { path: '/api/professionals', file: './routes/professionals' },
+  { path: '/api/payments', file: './routes/payments' },
+  { path: '/api/reviews', file: './routes/reviews' },
+  { path: '/api/schedules', file: './routes/schedules' },
+  { path: '/api/contracts', file: './routes/contracts' },
+  { path: '/api/stats', file: './routes/stats' },
+  { path: '/api/proposals', file: './routes/proposals' },
+  { path: '/api/messages', file: './routes/messages' },
+  { path: '/api/services', file: './routes/services' },
+  { path: '/api/service-proposals', file: './routes/service-proposals' },
+  { path: '/api/profile', file: './routes/profile' },
+  { path: '/api/notifications', file: './routes/notifications' }
+];
+
+routes.forEach(({ path, file }) => {
+  try {
+    const router = require(file);
+    if (typeof router === 'function') {
+      app.use(path, router);
+      console.log(`✅ Route ${path} OK`);
+    } else {
+      console.log(`⚠️  Route ${path} invalid (not router)`);
+    }
+  } catch (err) {
+    console.error(`❌ Route ${path}:`, err.message);
+  }
 });
 
-// Create HTTP server and attach Socket.IO for real-time chat
+// MercadoPago webhook separado
+try {
+  const paymentRoutes = require('./routes/payments');
+  if (paymentRoutes.webhook) {
+    app.post('/api/payments/webhook', express.raw({type: 'application/json'}), paymentRoutes.webhook);
+    console.log('✅ MercadoPago webhook OK');
+  }
+} catch (err) {
+  console.error('❌ MercadoPago webhook:', err.message);
+}
+
+// 404 handler (após todas rotas)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Server error' });
+});
+
+// Socket.IO
 const server = http.createServer(app);
 const io = new IOServer(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Authorization'],
-  },
+  cors: { origin: process.env.FRONTEND_URL || '*', methods: ['GET', 'POST'] }
 });
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
-
-  socket.on('join', (room) => {
-    if (!room) return;
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room ${room}`);
-  });
-
-  socket.on('leave', (room) => {
-    if (!room) return;
-    socket.leave(room);
-  });
-
-  socket.on('message', (msg) => {
-    // msg should contain: { room, message }
-    if (!msg || !msg.room) return;
-    // Broadcast to room
-    socket.to(msg.room).emit('message', msg);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected:', socket.id);
-  });
+  socket.on('join', (room) => socket.join(room));
+  socket.on('message', (msg) => socket.to(msg.room || 'general').emit('message', msg));
+  socket.on('disconnect', () => console.log('Socket disconnected'));
 });
 
-// Server
 server.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+  console.log(`🚀 Backend: http://localhost:${port}`);
+  console.log(`📱 Socket.IO ready`);
+  console.log(`🔗 Frontend: http://localhost:8080`);
 });
 
-module.exports = { app, pool, server, io };

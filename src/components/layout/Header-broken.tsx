@@ -19,7 +19,7 @@ export function Header() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const getDashboardPath = () => {
+const getDashboardPath = () => {
     if (!user || !user.role) return '/';
     const professionalRoles = ['cuidador', 'acompanhante', 'tecnico', 'enfermeiro', 'psicologo', 'fonoaudiologo', 'fisioterapeuta', 'nutricionista', 'terapeuta', 'profissional'];
     if (professionalRoles.includes(user.role)) {
@@ -34,9 +34,7 @@ export function Header() {
     return '/';
   };
 
-  const professionalRoles = ['cuidador', 'acompanhante', 'tecnico', 'enfermeiro', 'psicologo', 'fonoaudiologo', 'fisioterapeuta', 'nutricionista', 'terapeuta', 'profissional'];
-
-  const getProfilePath = () => {
+const professionalRoles = ['cuidador', 'acompanhante', 'tecnico', 'enfermeiro', 'psicologo', 'fonoaudiologo', 'fisioterapeuta', 'nutricionista', 'terapeuta', 'profissional'];\n\n\n  const getProfilePath = () => {
     if (!user) return '/';
     const professionalRoles = ['enfermeiro', 'tecnico', 'cuidador', 'acompanhante', 'profissional'];
     if (professionalRoles.includes(user.role)) {
@@ -66,7 +64,7 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          {isAuthenticated && professionalRoles.includes(user!.role) ? (
+{isAuthenticated && professionalRoles.includes(user!.role) ? (
             <Link
               to="/dashboard/profissional/procurar-turnos"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -195,7 +193,7 @@ export function Header() {
       >
         <div className="container py-4 space-y-4">
           <nav className="flex flex-col gap-2">
-            {isAuthenticated && professionalRoles.includes(user!.role) ? (
+{isAuthenticated && professionalRoles.includes(user!.role) ? (
               <Link
                 to="/dashboard/profissional/procurar-turnos"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground p-2"

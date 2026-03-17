@@ -22,7 +22,10 @@ export interface User {
   whatsapp?: string;
   city?: string;
   state?: string;
+  latitude?: number;
+  longitude?: number;
 }
+
 
 export const mockUsers: User[] = [
   {

@@ -35,6 +35,12 @@ import ServicoDetalhes from "./pages/marketplace/ServicoDetalhes";
 import DashboardProfissionalMarketplace from "./pages/marketplace/DashboardProfissionalMarketplace";
 import DashboardContratanteMarketplace from "./pages/marketplace/DashboardContratanteMarketplace";
 import ChatPage from "./pages/marketplace/ChatPage";
+import ProcurarTurnos from "./pages/marketplace/ProcurarTurnos";
+import Mensagens from "./pages/Mensagens";
+import DashboardProfissionalAgenda from "./pages/DashboardProfissionalAgenda";
+import MarketplaceMeusServicos from "./pages/marketplace/MeusServicos";
+import ContractorMarketplaceSidebar from "@/components/ContractorMarketplaceSidebar";
+
 
 const queryClient = new QueryClient();
 
@@ -71,13 +77,19 @@ const App = () => {
 
                 {/* Marketplace routes */}
                 <Route path="/dashboard/contratante/postar-servico" element={<PostarServico />} />
-                <Route path="/dashboard/contratante/meus-servicos" element={<MeusServicos />} />
+                <Route path="/dashboard/contratante/meus-servicos" element={<MarketplaceMeusServicos />} />
                 <Route path="/dashboard/contratante/meus-servicos/:id" element={<ServicoDetalhes />} />
                 <Route path="/dashboard/contratante/marketplace" element={<DashboardContratanteMarketplace />} />
-                <Route path="/dashboard/profissional/servicos-disponiveis" element={<ServicosDisponiveis />} />
+<Route path="/dashboard/profissional/procurar-turnos" element={<ProcurarTurnos />} />
+<Route path="/dashboard/profissional/servicos-disponiveis" element={<ServicosDisponiveis />} />
+                <Route path="/dashboard/profissional/agenda" element={<DashboardProfissionalAgenda />} />
                 <Route path="/dashboard/profissional/marketplace" element={<DashboardProfissionalMarketplace />} />
+
+                <Route path="/dashboard/mensagens" element={<Mensagens />} />
                 <Route path="/dashboard/chat" element={<ChatPage />} />
+                <Route path="/chat" element={<ChatPage />} />
                 <Route path="/chat/:conversationId" element={<ChatPage />} />
+
 
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/planos" element={<Planos />} />

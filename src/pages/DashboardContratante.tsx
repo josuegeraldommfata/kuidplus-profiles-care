@@ -13,6 +13,7 @@ import api from '@/lib/api';
 import { getFileUrl } from '@/lib/utils';
 import { User, Edit, Upload, Save, BarChart3, Plus } from 'lucide-react';
 import DashboardStats from '@/components/DashboardStats';
+import ContractorMarketplaceSidebar from '@/components/ContractorMarketplaceSidebar';
 
 interface UserData {
   id: number;
@@ -30,21 +31,32 @@ export default function DashboardContratante() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [errorUser, setErrorUser] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    surname: user?.surname || '',
-    whatsapp: user?.whatsapp || '',
-    city: user?.city || '',
-    state: user?.state || '',
+    name: '',
+    surname: '',
+    whatsapp: '',
+    city: '',
+    state: '',
   });
 
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+
+  const [proposalForm, setProposalForm] = useState({
+    title: '',
+    description: '',
+    profession: '',
+    city: '',
+    state: '',
+    budgetMin: '',
+    budgetMax: ''
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -90,18 +102,6 @@ export default function DashboardContratante() {
     };
   }, [profilePhotoPreview]);
 
-  // Create proposal state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [proposalForm, setProposalForm] = useState({
-    title: '',
-    description: '',
-    profession: '',
-    city: formData.city || '',
-    state: formData.state || '',
-    budgetMin: '',
-    budgetMax: ''
-  });
-
   const handleCreateProposal = async () => {
     try {
       const payload = {
@@ -118,24 +118,12 @@ export default function DashboardContratante() {
       if (res.status === 201) {
         alert('Proposta criada com sucesso! Abrindo chat...');
         setIsCreateModalOpen(false);
-        // open chat for the proposal
         navigate(`/chat?proposalId=${res.data.id}`);
       } else {
         alert('Erro ao criar proposta');
       }
-    } catch (err: unknown) {
-      console.error('Erro ao criar proposta:', err);
-      let message = 'Erro desconhecido';
-      if (typeof err === 'string') message = err;
-      else if (err && typeof err === 'object') {
-        const e = err as Record<string, unknown>;
-        const resp = e['response'] as Record<string, unknown> | undefined;
-        const data = resp?.['data'] as Record<string, unknown> | undefined;
-        message = (data && (data['error'] as string)) || (e['message'] as string) || JSON.stringify(e);
-      } else {
-        message = String(err);
-      }
-      alert('Erro ao criar proposta: ' + message);
+    } catch (err) {
+      alert('Erro ao criar proposta');
     }
   };
 
@@ -166,15 +154,8 @@ export default function DashboardContratante() {
       } else {
         alert('Erro ao salvar perfil.');
       }
-    } catch (error: unknown) {
-      console.error('Erro ao salvar perfil:', error);
-      const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
-      if (err.response?.status === 401) {
-        alert('Sessão expirada. Faça login novamente.');
-        navigate('/login');
-      } else {
-        alert('Erro ao salvar perfil: ' + (err.response?.data?.message || err.message));
-      }
+    } catch (error) {
+      alert('Erro ao salvar perfil.');
     }
   };
 
@@ -228,222 +209,227 @@ export default function DashboardContratante() {
     <Layout hideFooter>
       <div className="min-h-screen bg-muted/30">
         <div className="container py-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-2xl font-bold">
-                Olá, <span className="text-gradient-highlight">{userData?.name || user?.name}</span>!
-              </h1>
-              <p className="text-muted-foreground">
-                Gerencie seu perfil
-              </p>
-            </div>
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+            <ContractorMarketplaceSidebar />
 
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Criar Proposta</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Título</Label>
-                    <Input value={proposalForm.title} onChange={(e) => setProposalForm(f => ({...f, title: e.target.value}))} />
-                  </div>
-                  <div>
-                    <Label>Descrição</Label>
-                    <Textarea value={proposalForm.description} onChange={(e) => setProposalForm(f => ({...f, description: e.target.value}))} rows={6} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Profissão</Label>
-                      <Input value={proposalForm.profession} onChange={(e) => setProposalForm(f => ({...f, profession: e.target.value}))} />
-                    </div>
-                    <div>
-                      <Label>Cidade</Label>
-                      <Input value={proposalForm.city} onChange={(e) => setProposalForm(f => ({...f, city: e.target.value}))} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Estado</Label>
-                      <Input value={proposalForm.state} onChange={(e) => setProposalForm(f => ({...f, state: e.target.value}))} />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Label>Orçamento mínimo</Label>
-                        <Input type="number" value={proposalForm.budgetMin} onChange={(e) => setProposalForm(f => ({...f, budgetMin: e.target.value}))} />
-                      </div>
-                      <div className="flex-1">
-                        <Label>Orçamento máximo</Label>
-                        <Input type="number" value={proposalForm.budgetMax} onChange={(e) => setProposalForm(f => ({...f, budgetMax: e.target.value}))} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
-                    <Button onClick={handleCreateProposal} className="gradient-highlight border-0">Criar Proposta</Button>
-                  </div>
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h1 className="text-2xl font-bold">
+                    Olá, <span className="text-gradient-highlight">{userData?.name || user?.name}</span>!
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Gerencie seus serviços e propostas
+                  </p>
                 </div>
-              </DialogContent>
-            </Dialog>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Proposta
-              </Button>
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Proposta
+                </Button>
+              </div>
+
+              <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Criar Proposta</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Título</Label>
+                      <Input value={proposalForm.title} onChange={(e) => setProposalForm(f => ({...f, title: e.target.value}))} />
+                    </div>
+                    <div>
+                      <Label>Descrição</Label>
+                      <Textarea value={proposalForm.description} onChange={(e) => setProposalForm(f => ({...f, description: e.target.value}))} rows={6} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Profissão</Label>
+                        <Input value={proposalForm.profession} onChange={(e) => setProposalForm(f => ({...f, profession: e.target.value}))} />
+                      </div>
+                      <div>
+                        <Label>Cidade</Label>
+                        <Input value={proposalForm.city} onChange={(e) => setProposalForm(f => ({...f, city: e.target.value}))} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Estado</Label>
+                        <Input value={proposalForm.state} onChange={(e) => setProposalForm(f => ({...f, state: e.target.value}))} />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label>Orçamento mínimo</Label>
+                          <Input type="number" value={proposalForm.budgetMin} onChange={(e) => setProposalForm(f => ({...f, budgetMin: e.target.value}))} />
+                        </div>
+                        <div className="flex-1">
+                          <Label>Orçamento máximo</Label>
+                          <Input type="number" value={proposalForm.budgetMax} onChange={(e) => setProposalForm(f => ({...f, budgetMax: e.target.value}))} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
+                      <Button onClick={handleCreateProposal} className="gradient-highlight border-0">Criar Proposta</Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Tabs defaultValue="profile" className="mt-8">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="profile">
+                    <User className="w-4 h-4 mr-2" />
+                    Perfil
+                  </TabsTrigger>
+                  <TabsTrigger value="stats">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Estatísticas
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="profile">
+                  <Card className="max-w-md mx-auto">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-center">Sua Foto de Perfil</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center space-y-4">
+                      <div className="flex justify-center">
+                        <img
+                          src={
+                            profilePhotoPreview ||
+                            (userData?.profile_image
+                              ? getFileUrl(userData.profile_image)
+                              : '/placeholder.svg')
+                          }
+                          alt={userData?.name || 'Perfil'}
+                          className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                        />
+                      </div>
+
+                      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="w-full">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar Perfil
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Editar Perfil</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Foto de Perfil</Label>
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={
+                                    profilePhotoPreview ||
+                                    (userData?.profile_image
+                                      ? getFileUrl(userData.profile_image)
+                                      : '/placeholder.svg')
+                                  }
+                                  alt={userData?.name || 'Perfil'}
+                                  className="w-16 h-16 rounded-full object-cover"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
+                                  }}
+                                />
+                                <div>
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleProfilePhotoChange}
+                                    className="hidden"
+                                    id="profilePhoto"
+                                  />
+                                  <Label htmlFor="profilePhoto" className="cursor-pointer">
+                                    <Button variant="outline" size="sm" asChild>
+                                      <span>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Alterar foto
+                                      </span>
+                                    </Button>
+                                  </Label>
+                                  {profilePhotoFile && (
+                                    <p className="text-sm text-success mt-2">
+                                      Arquivo selecionado: {profilePhotoFile.name}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name">Nome</Label>
+                                <Input
+                                  id="name"
+                                  value={formData.name}
+                                  onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="surname">Sobrenome</Label>
+                                <Input
+                                  id="surname"
+                                  value={formData.surname}
+                                  onChange={(e) => setFormData((f) => ({ ...f, surname: e.target.value }))}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="whatsapp">WhatsApp</Label>
+                              <Input
+                                id="whatsapp"
+                                value={formData.whatsapp}
+                                onChange={(e) => setFormData((f) => ({ ...f, whatsapp: e.target.value }))}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="city">Cidade</Label>
+                                <Input
+                                  id="city"
+                                  value={formData.city}
+                                  onChange={(e) => setFormData((f) => ({ ...f, city: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="state">Estado</Label>
+                                <Input
+                                  id="state"
+                                  value={formData.state}
+                                  onChange={(e) => setFormData((f) => ({ ...f, state: e.target.value }))}
+                                />
+                              </div>
+                            </div>
+
+                            <Button onClick={handleSave} className="w-full">
+                              <Save className="mr-2 h-4 w-4" />
+                              Salvar alterações
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="stats">
+                  <DashboardStats type="contractor" />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
-
-          <Tabs defaultValue="profile" className="mt-8">
-            <TabsList className="mb-6">
-              <TabsTrigger value="profile">
-                <User className="w-4 h-4 mr-2" />
-                Perfil
-              </TabsTrigger>
-              <TabsTrigger value="stats">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Estatísticas
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="profile">
-              <Card className="max-w-md mx-auto">
-                <CardHeader>
-                  <CardTitle className="text-lg text-center">Sua Foto de Perfil</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center space-y-4">
-                  <div className="flex justify-center">
-                    <img
-                      src={
-                        profilePhotoPreview ||
-                        (userData?.profile_image
-                          ? getFileUrl(userData.profile_image)
-                          : '/placeholder.svg')
-                      }
-                      alt={userData?.name || 'Perfil'}
-                      className="w-32 h-32 rounded-full object-cover border-4 border-primary/20"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                  </div>
-
-                  <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="w-full">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar Perfil
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Editar Perfil</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Foto de Perfil</Label>
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={
-                                profilePhotoPreview ||
-                                (userData?.profile_image
-                                  ? getFileUrl(userData.profile_image)
-                                  : '/placeholder.svg')
-                              }
-                              alt={userData?.name || 'Perfil'}
-                              className="w-16 h-16 rounded-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';
-                              }}
-                            />
-                            <div>
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleProfilePhotoChange}
-                                className="hidden"
-                                id="profilePhoto"
-                              />
-                              <Label htmlFor="profilePhoto" className="cursor-pointer">
-                                <Button variant="outline" size="sm" asChild>
-                                  <span>
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    Alterar foto
-                                  </span>
-                                </Button>
-                              </Label>
-                              {profilePhotoFile && (
-                                <p className="text-sm text-success mt-2">
-                                  Arquivo selecionado: {profilePhotoFile.name}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Nome</Label>
-                            <Input
-                              id="name"
-                              value={formData.name}
-                              onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="surname">Sobrenome</Label>
-                            <Input
-                              id="surname"
-                              value={formData.surname}
-                              onChange={(e) => setFormData((f) => ({ ...f, surname: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="whatsapp">WhatsApp</Label>
-                          <Input
-                            id="whatsapp"
-                            value={formData.whatsapp}
-                            onChange={(e) => setFormData((f) => ({ ...f, whatsapp: e.target.value }))}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="city">Cidade</Label>
-                            <Input
-                              id="city"
-                              value={formData.city}
-                              onChange={(e) => setFormData((f) => ({ ...f, city: e.target.value }))}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="state">Estado</Label>
-                            <Input
-                              id="state"
-                              value={formData.state}
-                              onChange={(e) => setFormData((f) => ({ ...f, state: e.target.value }))}
-                            />
-                          </div>
-                        </div>
-
-                        <Button onClick={handleSave} className="w-full">
-                          <Save className="mr-2 h-4 w-4" />
-                          Salvar alterações
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="stats">
-              <DashboardStats type="contractor" />
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
     </Layout>
   );
 }
+

@@ -1,58 +1,42 @@
-# TODO - Correção do erro CSS
+# Correções Erros Console - KuidPlus Profiles Care
 
-- [x] 1. Editar src/index.css para corrigir imports das fontes (remover \n literais)
-- [ ] 2. Testar servidor Vite (bun dev ou npm run dev)
-- [ ] 3. Concluir tarefa
+## ✅ PASSO 1: Criar TODO.md e planejar
+- [x] Criar arquivo TODO.md
 
-- [x] Fonoaudiólogo(a)
-- [x] Fisioterapeuta
-- [x] Nutricionista
-- [x] Terapeuta Ocupacional
+## ✅ PASSO 2: Fix DashboardStats.tsx (CRASH CRÍTICO) 
+- [x] Editado `src/components/DashboardStats.tsx`
+  - ✅ `Number(s.profile?.rating || 0).toFixed(1)`
 
-## 2. Novos Planos (✅ Concluído)
-- [x] PLANO BASE (R$ 49/mês): Perfil ativo + calendário + feedbacks
-- [x] PLANO PROFISSIONAL (R$ 99/mês): Tudo acima + destaque na busca + selo verificado
-- [x] PLANO PREMIUM (R$ 179/mês): Tudo acima + aparece no topo + badge de especialista
+## ✅ PASSO 3: Fix API Profile Location (Backend)
+- [x] Editado `backend/routes/profile.js`
+  - ✅ SQL corrigido (userResult, result declarados)
+  - ✅ PUT → PATCH + campos dinâmicos opcionais
+  - ✅ Frontend só precisa enviar lat/lng
 
-## 3. Cidades Iniciais (✅ Concluído)
-- [x] Campinas
-- [x] São Paulo
-- [x] Rio de Janeiro
-- [x] Belo Horizonte
-- [x] Curitiba
+## ✅ PASSO 4: Endpoint proposals/my-counts (500 error)
+- [x] Editado `backend/routes/proposals.js`
+  - ✅ `GET /api/proposals/my-counts` com contadores por role
+  - ✅ Fix `MarketplaceSidebar` error
 
-## 4. Sistema de Calendário/Agenda (✅ Concluído)
-- [x] Criar tabela de agendamentos no banco (migration)
-- [x] API para gerenciar disponibilidade
-- [x] Frontend do calendário
-- [x] Mostrar dias vagos
-- [x] Ao clicar no dia, mostrar horários preenchidos/vagos
+## ⏳ PASSO 5: Testes
+- [ ] Backend restart
+- [ ] Test DashboardProfissional sem erros
+- [ ] Console limpo
 
-## 5. Dashboards para Cada Tipo de Profissional (✅ Já Existia)
-- [x] Dashboard Profissional existente serve para todos os tipos
+**Progresso: 3/5 passos ✅**
 
-## 6. Sistema de Avaliações (✅ Já Existia)
-- [x] Avaliações de profissionais por contratantes
-- [x] Avaliações de contratantes por profissionais
-- [x] Sistema de rating
-- [x] Timeline de avaliações
+## ⏳ PASSO 4: Criar endpoint proposals/my-counts
+- [ ] Editar/criar `backend/routes/proposals.js`
+  - `GET /api/proposals/my-counts` com contadores default 0
 
-## Arquivos Criados/Atualizados:
+## ⏳ PASSO 5: Melhorias Frontend
+- [ ] `src/contexts/AuthContext.tsx` - melhor error handling
 
-### Backend:
-- backend/seed_plans.js - Novos planos (BASE R$49, PROFISSIONAL R$99, PREMIUM R$179)
-- backend/migrations/20260118_create_schedules_table.sql - Tabela de agendamentos
-- backend/routes/schedules.js - API do calendário
-- backend/server.js - Registro das novas rotas
+## ⏳ TESTES
+- [ ] Backend: `cd backend && bun dev`
+- [ ] Frontend: DashboardProfissional sem crash
+- [ ] Console limpo (sem 404/500)
+- [ ] Test geolocation API
 
-### Frontend:
-- src/data/mockData.ts - Novos tipos de profissionais + cidades iniciais
-- src/pages/Planos.tsx - Interface atualizada com os novos planos
-- src/components/ui/Calendar.tsx - Componente de calendário
+**Progresso: 1/7 passos ✅**
 
-### Correções de Upload:
-- backend/routes/professionals.js - Atualizado para permitir PDF em certificados e antecedentes criminais
-- Foto de perfil: JPG, PNG
-- Certificados: JPG, PNG, PDF
-- Antecedentes criminais: PDF
-- Vídeo: MP4

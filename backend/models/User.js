@@ -45,10 +45,40 @@ class User {
   }
 
   static async findAll() {
-    const query = 'SELECT id, email, role, created_at, updated_at FROM users ORDER BY created_at DESC';
+    const query = 'SELECT id, email, role, latitude, longitude, created_at, updated_at FROM users ORDER BY created_at DESC';
     const result = await pool.query(query);
     return result.rows.map(row => new User(row));
   }
+
+  static async findNearby(lat, lng, radiusKm = 50) {
+    const query = `
+      SELECT *,
+        (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
+         cos(radians(longitude) - radians($2)) +
+         sin(radians($1)) * sin(radians(latitude)))) AS distance
+      FROM users
+      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+      HAVING (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
+              cos(radians(longitude) - radians($2)) +
+              sin(radians($1)) * sin(radians(latitude)))) < $3
+      ORDER BY distance
+    `;
+    const result = await pool.query(query, [lat, lng, radiusKm]);
+    return result.rows.map(row => new User(row));
+  }
+
+  static async updateLocation(id, latitude, longitude) {
+    const query = `
+      UPDATE users
+      SET latitude = $1, longitude = $2, location_updated_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING *
+    `;
+    const result = await pool.query(query, [latitude, longitude, id]);
+    return result.rows[0] ? new User(result.rows[0]) : null;
+  }
+
 
   async update(updateData) {
     const fields = [];

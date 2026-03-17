@@ -8,6 +8,8 @@ import React, {
 import api from '@/lib/api';
 import { User } from '@/data/mockData';
 
+
+
 // Extend User type for subscription fields
 declare module '@/data/mockData' {
   interface User {
@@ -72,6 +74,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, []);
+
+  // Auto-save geolocation quando user logado
+  useEffect(() => {
+    if (!user || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          await api.patch('/api/profile/location', {
+            latitude,
+            longitude
+          });
+
+          // Update local user
+          updateUser({ latitude, longitude });
+
+          console.log('📍 Localização salva:', latitude, longitude);
+        } catch (error) {
+          console.warn('Erro salvar localização:', error);
+        }
+      },
+      (error) => {
+        console.warn('Geolocation negada:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 5 * 60 * 1000 // 5min cache
+      }
+    );
+  }, [user]);
+
 
   const login = async (email: string, password: string) => {
     try {

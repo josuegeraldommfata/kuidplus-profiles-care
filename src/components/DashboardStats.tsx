@@ -202,7 +202,7 @@ export default function DashboardStats({ type }: DashboardStatsProps) {
                   <Star className="w-5 h-5 text-warning" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold">{s.profile?.rating?.toFixed(1) || '0.0'}</p>
+{Number(s.profile?.rating || 0).toFixed(1)}
                   <p className="text-xs text-muted-foreground">Nota ({s.profile?.total_ratings || 0} avaliações)</p>
                 </div>
               </div>
