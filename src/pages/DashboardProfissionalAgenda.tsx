@@ -42,7 +42,7 @@ export default function DashboardProfissionalAgenda() {
 
   const fetchAvailabilities = async () => {
     try {
-      const response = await api.get(`/api/professionals/${user.id}/availabilities`);
+      const response = await api.get(`/api/professionals/${user?.id}/availabilities`);
       setAvailabilities(response.data);
     } catch (error) {
       toast({
