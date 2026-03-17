@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import api from '@/lib/api';
 import { MessageCircle, Clock, Menu, X, Send, Edit } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Conversation {
   id: number;

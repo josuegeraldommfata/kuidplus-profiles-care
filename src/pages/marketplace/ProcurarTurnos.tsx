@@ -130,7 +130,7 @@ export default function ProcurarTurnos() {
               type="number"
               placeholder="Orçamento máx (R$)"
               value={filters.budgetMax}
-              onChange={(e) => setFilters({...filters, budgetMax: e.target.value})}
+              onChange={(e) => setFilters({...filters, budgetMax: Number(e.target.value)})}
             />
           </div>
         </div>

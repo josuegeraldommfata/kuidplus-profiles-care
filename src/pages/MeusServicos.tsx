@@ -24,6 +24,7 @@ interface Service {
   professional_id: number;
   proposals_count: number;
   created_at: string;
+  payment_id?: string | null;
 }
 
 interface Proposal {
