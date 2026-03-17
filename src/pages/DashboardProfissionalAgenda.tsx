@@ -132,11 +132,9 @@ export default function DashboardProfissionalAgenda() {
               <CardTitle>Calendário Mensal</CardTitle>
             </CardHeader>
             <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
+              <CalendarPicker
+                professionalId={user?.id}
+                readOnly
               />
             </CardContent>
           </Card>
