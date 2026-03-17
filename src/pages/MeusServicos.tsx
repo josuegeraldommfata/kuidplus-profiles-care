@@ -24,6 +24,7 @@ interface Service {
   professional_id: number;
   proposals_count: number;
   created_at: string;
+  payment_id?: string | null;
 }
 
 interface Proposal {
@@ -36,7 +37,7 @@ interface Proposal {
 
 export default function MeusServicos() {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);

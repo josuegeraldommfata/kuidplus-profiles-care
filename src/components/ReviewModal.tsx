@@ -85,7 +85,7 @@ export default function ReviewModal({
             <StarRating
               rating={rating}
               onRatingChange={setRating}
-              editable
+              interactive
               size="lg"
             />
           </div>

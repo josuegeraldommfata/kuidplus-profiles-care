@@ -158,7 +158,7 @@ export default function MatchingProfissionais() {
 
               <CardContent className="pt-0 space-y-4">
                 <div className="flex items-center gap-2">
-                  <StarRating rating={pro.rating} size="sm" readonly />
+                  <StarRating rating={pro.rating} size="sm" />
                   <span className="text-sm font-medium">({pro.review_count})</span>
                   <Badge className="ml-auto text-xs" variant={pro.subscription_plan === 'PREMIUM' ? 'default' : 'secondary'}>
                     {pro.subscription_plan}
