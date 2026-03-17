@@ -30,7 +30,6 @@ import MercadoPagoKeys from "./pages/MercadoPagoKeys";
 // Marketplace pages
 import PostarServico from "./pages/marketplace/PostarServico";
 import ServicosDisponiveis from "./pages/marketplace/ServicosDisponiveis";
-import MeusServicos from "./pages/marketplace/MeusServicos";
 import ServicoDetalhes from "./pages/marketplace/ServicoDetalhes";
 import DashboardProfissionalMarketplace from "./pages/marketplace/DashboardProfissionalMarketplace";
 import DashboardContratanteMarketplace from "./pages/marketplace/DashboardContratanteMarketplace";
@@ -39,7 +38,6 @@ import ProcurarTurnos from "./pages/marketplace/ProcurarTurnos";
 import Mensagens from "./pages/Mensagens";
 import DashboardProfissionalAgenda from "./pages/DashboardProfissionalAgenda";
 import MarketplaceMeusServicos from "./pages/marketplace/MeusServicos";
-import ContractorMarketplaceSidebar from "@/components/ContractorMarketplaceSidebar";
 
 
 const queryClient = new QueryClient();

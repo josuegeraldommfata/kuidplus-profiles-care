@@ -53,7 +53,7 @@ export default function PostarServico() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleChange = (field: keyof ServiceForm, value: string | number | boolean) => {
+  const handleChange = (field: keyof ServiceForm, value: string | number | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

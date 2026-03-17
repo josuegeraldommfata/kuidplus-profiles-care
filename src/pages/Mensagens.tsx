@@ -249,7 +249,7 @@ export default function Mensagens() {
                           placeholder="Digite sua mensagem..."
                           rows={1}
                           className="flex-1 resize-none"
-                          onKeyPress={(e) => {
+                          onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
                               sendMessage();

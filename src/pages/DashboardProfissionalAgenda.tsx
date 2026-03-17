@@ -42,7 +42,7 @@ export default function DashboardProfissionalAgenda() {
 
   const fetchAvailabilities = async () => {
     try {
-      const response = await api.get(`/api/professionals/${user.id}/availabilities`);
+      const response = await api.get(`/api/professionals/${user?.id}/availabilities`);
       setAvailabilities(response.data);
     } catch (error) {
       toast({
@@ -69,7 +69,7 @@ export default function DashboardProfissionalAgenda() {
 
     try {
       const response = await api.post('/api/availabilities', {
-        professional_id: user.id,
+        professional_id: user?.id,
         date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: startTime,
         end_time: endTime,
