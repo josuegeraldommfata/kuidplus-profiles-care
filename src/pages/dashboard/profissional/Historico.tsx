@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import api from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import MarketplaceSidebar from '@/components/MarketplaceSidebar';
 
 interface HistoricoItem {
   id: number;
@@ -28,203 +28,99 @@ export default function Historico() {
   const [filter, setFilter] = useState<'todos' | 'contratos' | 'conversas'>('todos');
 
   useEffect(() => {
-    if (user?.id) {
-      fetchHistorico();
-    }
+    if (user?.id) fetchHistorico();
   }, [user?.id, filter]);
 
   const fetchHistorico = async () => {
     try {
       setLoading(true);
-
-      // Mock data por enquanto - substituir por APIs reais depois
+      // Mock data - substituir por APIs reais
       const mockData: HistoricoItem[] = [
-        {
-          id: 1,
-          type: 'contrato',
-          title: 'Consulta Nutricionista - Plano 3 sessões',
-          status: 'completed',
-          date: '15/11/2024',
-          value: 250,
-          partner_name: 'Maria Silva',
-          rating: 5
-        },
-        {
-          id: 2,
-          type: 'serviço',
-          title: 'Fisioterapia esportiva - 2 sessões',
-          status: 'cancelled',
-          date: '10/11/2024',
-          value: 180,
-          partner_name: 'João Santos',
-          rating: null
-        },
-        {
-          id: 3,
-          type: 'conversa',
-          title: 'Proposta Enfermagem domiciliar',
-          status: 'closed',
-          date: '08/11/2024',
-          value: null,
-          partner_name: 'Ana Oliveira',
-          rating: 4
-        }
+        { id: 1, type: 'contrato', title: 'Cuidado domiciliar - 3 diárias', status: 'completed', date: '15/11/2024', value: 750, partner_name: 'Maria Silva', rating: 5 },
+        { id: 2, type: 'serviço', title: 'Fisioterapia esportiva', status: 'cancelled', date: '10/11/2024', value: 180, partner_name: 'João Santos' },
+        { id: 3, type: 'conversa', title: 'Proposta enfermagem noturna', status: 'closed', date: '08/11/2024', partner_name: 'Ana Oliveira', rating: 4 },
       ];
-
-      // Filtrar por tipo
       let filtered = mockData;
-      if (filter === 'contratos') {
-        filtered = mockData.filter(item => item.type === 'contrato');
-      } else if (filter === 'conversas') {
-        filtered = mockData.filter(item => item.type === 'conversa' || item.type === 'serviço');
-      }
-
+      if (filter === 'contratos') filtered = mockData.filter(i => i.type === 'contrato');
+      else if (filter === 'conversas') filtered = mockData.filter(i => i.type === 'conversa' || i.type === 'serviço');
       setHistorico(filtered);
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar histórico',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: 'Não foi possível carregar histórico', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'contrato': return '📋';
-      case 'conversa': return '💬';
-      case 'serviço': return '🩺';
-      default: return '📂';
-    }
+    const map: Record<string, string> = { contrato: '📋', conversa: '💬', serviço: '🩺' };
+    return map[type] || '📂';
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'active': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-yellow-100 text-yellow-800';
-    }
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = { completed: 'Concluído', active: 'Ativo', cancelled: 'Cancelado', closed: 'Fechado' };
+    return map[status] || status;
   };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout hideFooter>
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Histórico</h1>
-            <p className="text-muted-foreground mt-2">
-              Todos seus contratos, serviços e conversas finalizadas
-              <span className="ml-4 px-3 py-1 bg-muted rounded-full text-sm">
-                {historico.length} registros
-              </span>
-            </p>
-          </div>
+      <div className="min-h-screen bg-muted/30">
+        <div className="container py-8">
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+            <MarketplaceSidebar />
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">Histórico</h1>
+                  <p className="text-muted-foreground">{historico.length} registros</p>
+                </div>
+                <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                  {(['todos', 'contratos', 'conversas'] as const).map(f => (
+                    <Button key={f} variant={filter === f ? 'default' : 'ghost'} size="sm" onClick={() => setFilter(f)} className="capitalize">
+                      {f}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="flex gap-2 bg-muted p-2 rounded-lg">
-            <Button
-              variant={filter === 'todos' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilter('todos')}
-              className="h-9"
-            >
-              Todos
-            </Button>
-            <Button
-              variant={filter === 'contratos' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilter('contratos')}
-              className="h-9"
-            >
-              Contratos
-            </Button>
-            <Button
-              variant={filter === 'conversas' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilter('conversas')}
-              className="h-9"
-            >
-              Conversas
-            </Button>
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                </div>
+              ) : historico.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <p className="text-xl text-muted-foreground mb-4">Nenhum histórico encontrado</p>
+                    <Button onClick={() => navigate('/dashboard/profissional/servicos-disponiveis')}>Buscar serviços</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {historico.map((item) => (
+                    <Card key={`${item.type}-${item.id}`} className="hover:shadow-md transition-all">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-lg font-semibold">
+                            {getTypeIcon(item.type)} {item.title}
+                          </div>
+                          <Badge variant={item.status === 'completed' ? 'default' : 'secondary'}>
+                            {getStatusLabel(item.status)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                          <span>{item.date}</span>
+                          {item.value && <span>R$ {item.value.toLocaleString()}</span>}
+                          <span>{item.partner_name}</span>
+                          {item.rating && <span>⭐ {item.rating}/5</span>}
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {historico.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-16">
-              <div className="w-24 h-24 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl">📋</span>
-              </div>
-              <h3 className="text-2xl font-semibold mb-2">Nenhum histórico</h3>
-              <p className="text-muted-foreground mb-6">
-                Ainda não há registros de contratos ou conversas finalizadas.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => navigate('/dashboard/profissional/marketplace')}>
-                  Buscar serviços
-                </Button>
-                <Button onClick={() => navigate('/dashboard/mensagens')}>
-                  Ver mensagens
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {historico.map((item) => (
-              <Card key={item.id} className="hover:shadow-lg transition-all">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center gap-2 font-semibold text-lg">
-                      {getTypeIcon(item.type)}
-                      <span>{item.title}</span>
-                    </div>
-                    <Badge className={getStatusColor(item.status)}>
-                      {item.status === 'completed' ? 'Concluído' :
-                       item.status === 'active' ? 'Ativo' :
-                       item.status === 'cancelled' ? 'Cancelado' : 'Fechado'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-                    <span>{item.date}</span>
-                    {item.value && <span>R$ {item.value.toLocaleString()}</span>}
-                    <span>Parceiro: {item.partner_name}</span>
-                    {item.rating && (
-                      <span className="flex items-center gap-1">
-                        ⭐ {item.rating}/5
-                      </span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      Ver detalhes
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      Avaliar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
       </div>
     </Layout>
   );
 }
-

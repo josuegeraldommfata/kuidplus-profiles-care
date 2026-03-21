@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await api.patch('/api/profile/location', {
             latitude,
             longitude,
-            cidade: user.cidade || '',
-            estado: user.estado || ''
+            cidade: (user as any).cidade || (user as any).city || '',
+            estado: (user as any).estado || (user as any).state || ''
           });
 
           // Update local user
