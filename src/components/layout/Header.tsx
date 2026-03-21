@@ -112,7 +112,7 @@ export function Header() {
 
         {/* Desktop Auth */}
         <div className="hidden md:flex items-center gap-3">
-          <NotificationBell />
+          {isAuthenticated && <NotificationBell />}
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
