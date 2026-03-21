@@ -51,7 +51,8 @@ const routes = [
   { path: '/api/services', file: './routes/services' },
   { path: '/api/service-proposals', file: './routes/service-proposals' },
   { path: '/api/profile', file: './routes/profile' },
-  { path: '/api/notifications', file: './routes/notifications' }
+  { path: '/api/notifications', file: './routes/notifications' },
+  { path: '/api/availabilities', file: './routes/availabilities' }
 ];
 
 routes.forEach(({ path, file }) => {

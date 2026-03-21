@@ -65,6 +65,28 @@ router.patch('/location', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const { latitude, longitude, cidade, estado, cep } = req.body;
 
+    // UPDATE seguro - só campos fornecidos
+    const result = await db.query(`
+      UPDATE users
+      SET
+        latitude = COALESCE(NULLIF($2, ''), latitude),
+        longitude = COALESCE(NULLIF($3, ''), longitude),
+        cidade = COALESCE(NULLIF($4, ''), cidade),
+        estado = COALESCE(NULLIF($5, ''), estado),
+        cep = COALESCE(NULLIF($6, ''), cep)
+      WHERE id = $1
+      RETURNING latitude, longitude, cidade, estado, cep
+    `, [userId, latitude, longitude, cidade, estado, cep]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    const userId = req.user.id;
+    const { latitude, longitude, cidade, estado, cep } = req.body;
+
     const fields = [];
     const values = [];
     let paramIndex = 1;
@@ -101,11 +123,11 @@ router.patch('/location', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Nenhum campo para atualizar' });
     }
 
-    const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+    const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING latitude, longitude, cidade, estado, cep`;
 
-    await db.query(query, values);
+    const result = await db.query(query, values);
 
-    res.json({ success: true, message: 'Localização atualizada' });
+    res.json({ success: true, data: result.rows[0] });
 
   } catch (error) {
     console.error('Erro ao atualizar localização:', error);

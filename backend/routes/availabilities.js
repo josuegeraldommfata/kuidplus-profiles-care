@@ -1,72 +1,51 @@
 const express = require('express');
-const router = express.Router();
 const pool = require('../db');
-const auth = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
-// Listar disponibilidades do profissional
-router.get('/:professionalId', auth, async (req, res) => {
-  const { professionalId } = req.params;
+const router = express.Router();
 
-  if (req.user.id != professionalId) {
-    return res.status(403).json({ error: 'Acesso negado' });
-  }
-
+// GET /api/availabilities?professional_id=ID - Lista disponibilidades
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const availabilities = await pool.query(`
-      SELECT sa.*, s.title as service_title
-      FROM service_availabilities sa
-      LEFT JOIN services s ON sa.service_id = s.id
-      WHERE sa.professional_id = $1
-      ORDER BY sa.date, sa.start_time
-    `, [professionalId]);
+    const { professional_id } = req.query;
 
-    res.json(availabilities.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Adicionar disponibilidade
-router.post('/', auth, async (req, res) => {
-  const { professional_id, service_id, date, start_time, end_time } = req.body;
-
-  if (req.user.id != professional_id) {
-    return res.status(403).json({ error: 'Acesso negado' });
-  }
-
-  try {
-    const availability = await pool.query(`
-      INSERT INTO service_availabilities (professional_id, service_id, date, start_time, end_time)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `, [professional_id, service_id, date, start_time, end_time]);
-
-    res.json(availability.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Atualizar status (book/cancel)
-router.patch('/:id/status', auth, async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  try {
-    const result = await pool.query(`
-      UPDATE service_availabilities
-      SET status = $1
-      WHERE id = $2 AND professional_id = $3
-      RETURNING *
-    `, [status, id, req.user.id]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Disponibilidade não encontrada' });
+    if (!professional_id) {
+      return res.status(400).json({ error: 'professional_id requerido' });
     }
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const result = await pool.query(`
+      SELECT
+        a.*,
+        COALESCE(s.title, 'Disponível') as service_title
+      FROM availabilities a
+      LEFT JOIN schedules sch ON a.id = sch.availability_id
+      LEFT JOIN services s ON sch.service_id = s.id
+      WHERE a.professional_id = $1
+      ORDER BY a.date ASC, a.start_time ASC
+    `, [professional_id]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Availabilities error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/availabilities - Criar disponibilidade
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { professional_id, date, start_time, end_time } = req.body;
+
+    const result = await pool.query(`
+      INSERT INTO availabilities (professional_id, date, start_time, end_time)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `, [professional_id, date, start_time, end_time]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Create availability error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

@@ -81,7 +81,44 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Professional applies to service proposal
+// GET /api/proposals/my-counts - MarketplaceSidebar OK
+router.get('/my-counts', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    let counts = { pending: 0, accepted: 0, total: 0 };
+
+    if (role === 'profissional') {
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status IN ('pendente', 'pending') OR status IS NULL THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN status IN ('aceita', 'accepted') THEN 1 ELSE 0 END) as accepted
+        FROM service_proposals
+        WHERE professional_id = $1
+      `, [userId]);
+      counts = result.rows[0];
+    } else if (role === 'contratante') {
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status IN ('pendente', 'pending') OR status IS NULL THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN status IN ('aceita', 'accepted') THEN 1 ELSE 0 END) as accepted
+        FROM service_proposals
+        WHERE contractor_id = $1
+      `, [userId]);
+      counts = result.rows[0];
+    }
+
+    res.json(counts);
+  } catch (error) {
+    console.error('Proposals my-counts error:', error);
+    res.status(500).json({ error: 'Erro ao carregar contadores' });
+  }
+});
+
+// Service proposals (mantido)
 router.post('/services/:serviceId/apply', authenticateToken, async (req, res) => {
   try {
     const { serviceId } = req.params;
@@ -112,119 +149,5 @@ router.post('/services/:serviceId/apply', authenticateToken, async (req, res) =>
   }
 });
 
-// Accept/reject service proposal
-router.post('/services/:serviceId/:proposalId/accept', authenticateToken, async (req, res) => {
-  try {
-    const { serviceId, proposalId } = req.params;
-    const contractorId = req.user.id;
-
-    // Verify service ownership
-    const serviceResult = await pool.query('SELECT contractor_id FROM services WHERE id = $1', [serviceId]);
-    if (serviceResult.rows.length === 0 || serviceResult.rows[0].contractor_id !== contractorId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    // Update proposal status and service status
-    await pool.query(
-      'UPDATE service_proposals SET status = $1 WHERE id = $2',
-      ['aceita', proposalId]
-    );
-    await pool.query(
-      'UPDATE services SET status = $1 WHERE id = $2',
-      ['profissional_selecionado', serviceId]
-    );
-
-    // Create conversation automatically
-    const conversationResult = await pool.query(
-      `INSERT INTO conversations (service_id, professional_id, contractor_id)
-       VALUES ($1, (SELECT professional_id FROM service_proposals WHERE id = $2), $3) RETURNING *`,
-      [serviceId, proposalId, contractorId]
-    );
-
-    const io = req.app.get('socketio');
-    io.emit('proposta_aceita', {
-      proposalId,
-      serviceId,
-      conversationId: conversationResult.rows[0].id
-    });
-
-    res.json({ message: 'Proposta aceita e conversa iniciada' });
-  } catch (error) {
-    console.error('Accept proposal error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.post('/services/:serviceId/:proposalId/reject', authenticateToken, async (req, res) => {
-  try {
-    const { serviceId, proposalId } = req.params;
-    const contractorId = req.user.id;
-
-    const serviceResult = await pool.query('SELECT contractor_id FROM services WHERE id = $1', [serviceId]);
-    if (serviceResult.rows.length === 0 || serviceResult.rows[0].contractor_id !== contractorId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    await pool.query(
-      'UPDATE service_proposals SET status = $1 WHERE id = $2',
-      ['recusada', proposalId]
-    );
-
-    const io = req.app.get('socketio');
-    io.emit('proposta_recusada', { proposalId, serviceId });
-
-    res.json({ message: 'Proposta recusada' });
-  } catch (error) {
-    console.error('Reject proposal error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/proposals/my-counts - Fix MarketplaceSidebar error
-router.get('/my-counts', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const role = req.user.role;
-
-    let counts = { pending: 0, accepted: 0, total: 0 };
-
-    if (role === 'profissional') {
-      // Count proposals sent by professional (service_proposals)
-      const result = await pool.query(`
-        SELECT
-          COUNT(*) as total,
-          SUM(CASE WHEN status = 'pendente' OR status IS NULL THEN 1 ELSE 0 END) as pending,
-          SUM(CASE WHEN status = 'aceita' THEN 1 ELSE 0 END) as accepted
-        FROM service_proposals sp
-        JOIN services s ON sp.service_id = s.id
-        WHERE sp.professional_id = $1
-      `, [userId]);
-
-      counts = result.rows[0];
-
-    } else if (role === 'contratante') {
-      // Count proposals received by contractor
-      const result = await pool.query(`
-        SELECT
-          COUNT(*) as total,
-          SUM(CASE WHEN status = 'pendente' OR status IS NULL THEN 1 ELSE 0 END) as pending,
-          SUM(CASE WHEN status = 'aceita' THEN 1 ELSE 0 END) as accepted
-        FROM service_proposals sp
-        WHERE sp.contractor_id = $1
-      `, [userId]);
-
-      counts = result.rows[0];
-    }
-
-    res.json({
-      success: true,
-      data: counts
-    });
-
-  } catch (error) {
-    console.error('Proposals my-counts error:', error);
-    res.status(500).json({ error: 'Erro ao carregar contadores' });
-  }
-});
-
 module.exports = router;
+

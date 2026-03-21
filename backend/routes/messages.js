@@ -4,7 +4,35 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// List messages, optionally by proposal
+// GET /api/messages/conversations - Listar conversas do usuário
+router.get('/conversations', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await pool.query(`
+      SELECT c.id, c.created_at, c.updated_at, c.service_id,
+        COALESCE(u1.name, 'Contratante') as contractor_name,
+        COALESCE(u2.name, 'Profissional') as professional_name,
+        COALESCE(s.title, 'Serviço') as service_title,
+        COUNT(m.id) FILTER (WHERE m.is_read = false AND m.receiver_id = $1) as unread_count
+      FROM conversations c
+      LEFT JOIN users u1 ON c.contractor_id = u1.id
+      LEFT JOIN users u2 ON c.professional_id = u2.id
+      LEFT JOIN services s ON c.service_id = s.id
+      LEFT JOIN messages m ON m.conversation_id = c.id
+      WHERE c.contractor_id = $1 OR c.professional_id = $1
+      GROUP BY c.id, u1.name, u2.name, s.title
+      ORDER BY c.updated_at DESC NULLS LAST
+    `, [userId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Conversations error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List messages, optionally by proposal (endpoint antigo mantido)
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const { proposalId } = req.query;

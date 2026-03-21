@@ -39,6 +39,13 @@ import Mensagens from "./pages/Mensagens";
 import DashboardProfissionalAgenda from "./pages/DashboardProfissionalAgenda";
 import MarketplaceMeusServicos from "./pages/marketplace/MeusServicos";
 
+// ✅ TODAS PÁGINAS NOVAS
+import MinhasPropostas from "./pages/dashboard/profissional/MinhasPropostas";
+import Historico from "./pages/dashboard/profissional/Historico";
+import ServicosAceitos from "./pages/dashboard/profissional/ServicosAceitos";
+import PropostasRecebidas from "./pages/dashboard/contratante/PropostasRecebidas";
+import ServicosContratados from "./pages/dashboard/contratante/ServicosContratados";
+import HistoricoContratante from "./pages/dashboard/contratante/Historico";
 
 const queryClient = new QueryClient();
 
@@ -73,13 +80,23 @@ const App = () => {
                 <Route path="/admin" element={<DashboardAdmin />} />
                 <Route path="/dashboard-admin" element={<DashboardAdmin />} />
 
-                {/* Marketplace routes */}
+                {/* Marketplace & Dashboard routes */}
                 <Route path="/dashboard/contratante/postar-servico" element={<PostarServico />} />
                 <Route path="/dashboard/contratante/meus-servicos" element={<MarketplaceMeusServicos />} />
                 <Route path="/dashboard/contratante/meus-servicos/:id" element={<ServicoDetalhes />} />
                 <Route path="/dashboard/contratante/marketplace" element={<DashboardContratanteMarketplace />} />
-<Route path="/dashboard/profissional/procurar-turnos" element={<ProcurarTurnos />} />
-<Route path="/dashboard/profissional/servicos-disponiveis" element={<ServicosDisponiveis />} />
+
+                {/* ✅ PÁGINAS CONTRATANTE - 404 RESOLVIDO */}
+                <Route path="/dashboard/contratante/propostas-recebidas" element={<PropostasRecebidas />} />
+                <Route path="/dashboard/contratante/servicos-contratados" element={<ServicosContratados />} />
+                <Route path="/dashboard/contratante/historico" element={<HistoricoContratante />} />
+
+                <Route path="/dashboard/profissional/procurar-turnos" element={<ProcurarTurnos />} />
+                <Route path="/dashboard/profissional/servicos-disponiveis" element={<ServicosDisponiveis />} />
+                <Route path="/dashboard/profissional/servicos-aceitos" element={<ServicosAceitos />} />
+
+                <Route path="/dashboard/profissional/minhas-propostas" element={<MinhasPropostas />} />
+                <Route path="/dashboard/profissional/historico" element={<Historico />} />
                 <Route path="/dashboard/profissional/agenda" element={<DashboardProfissionalAgenda />} />
                 <Route path="/dashboard/profissional/marketplace" element={<DashboardProfissionalMarketplace />} />
 
@@ -87,7 +104,6 @@ const App = () => {
                 <Route path="/dashboard/chat" element={<ChatPage />} />
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/chat/:conversationId" element={<ChatPage />} />
-
 
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/planos" element={<Planos />} />
@@ -108,3 +124,4 @@ const App = () => {
 };
 
 export default App;
+

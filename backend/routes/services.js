@@ -40,7 +40,46 @@ router.get('/open', async (req, res) => {
   }
 });
 
-// Serviços do usuário atual (contratante)
+// GET /api/services/my-counts - Contadores de serviços (corrige MarketplaceSidebar)
+router.get('/my-counts', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    let counts = { pending: 0, active: 0, total: 0 };
+
+    if (role === 'contratante') {
+      // Serviços do contratante
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN status IN ('profissional_selecionado', 'active') THEN 1 ELSE 0 END) as active
+        FROM services WHERE contractor_id = $1
+      `, [userId]);
+      counts = result.rows[0];
+    } else if (role === 'profissional') {
+      // Aplicações do profissional
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN sp.status = 'pendente' OR sp.status IS NULL THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN sp.status = 'aceita' THEN 1 ELSE 0 END) as active
+        FROM service_proposals sp
+        JOIN services s ON sp.service_id = s.id
+        WHERE sp.professional_id = $1
+      `, [userId]);
+      counts = result.rows[0];
+    }
+
+    res.json(counts);
+  } catch (error) {
+    console.error('Services my-counts error:', error);
+    res.status(500).json({ error: 'Erro ao carregar contadores' });
+  }
+});
+
+// Serviços do usuário atual (contratante) - mantido compatibilidade
 router.get('/my-services', auth, async (req, res) => {
   try {
     const services = await pool.query(`

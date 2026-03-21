@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -15,32 +15,31 @@ const pool = new Pool({
 
 async function runMigrations() {
   try {
-    console.log('Executando todas as migrations do diretório migrations...');
-
     const migrationsDir = path.join(__dirname, 'migrations');
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort();
 
-    for (const file of migrationFiles) {
-      const filePath = path.join(migrationsDir, file);
-      const sql = fs.readFileSync(filePath, 'utf8');
+    console.log('🔄 Executando migrações...');
 
+    for (const file of migrationFiles) {
       try {
+        const filePath = path.join(migrationsDir, file);
+        const sql = fs.readFileSync(filePath, 'utf8');
+
+        console.log(`📝 Executando: ${file}`);
+
         await pool.query(sql);
-        console.log(`✓ ${file} executada com sucesso`);
+        console.log(`✅ ${file} OK`);
       } catch (err) {
-        if (err.code === '42P07' || err.code === '42701') {
-          console.log(`⚠ ${file} já existe/pulada (normal)`);
-        } else {
-          console.error(`✗ Erro em ${file}:`, err.message);
-        }
+        console.log(`⚠️  ${file} já executada ou erro:`, err.message);
       }
+      console.log(`✅ ${file} executada com sucesso!`);
     }
 
-    console.log('\n✅ Todas migrations executadas!');
-  } catch (err) {
-    console.error('Erro geral:', err);
+    console.log('🎉 Todas migrações executadas!');
+  } catch (error) {
+    console.error('❌ Erro nas migrações:', error);
   } finally {
     await pool.end();
   }
