@@ -7,6 +7,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import MarketplaceSidebar from '@/components/MarketplaceSidebar';
+import { MessageCircle, CheckCircle } from 'lucide-react';
 
 interface Service {
   id: number;
@@ -14,6 +16,7 @@ interface Service {
   status: string;
   contractor_name: string;
   created_at: string;
+  value?: number;
 }
 
 export default function ServicosAceitos() {
@@ -24,77 +27,76 @@ export default function ServicosAceitos() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchServices();
-    }
+    if (user?.id) fetchServices();
   }, [user?.id]);
 
   const fetchServices = async () => {
     try {
       const response = await api.get('/api/service-proposals/my-proposals');
-      setServices(response.data);
+      setServices(response.data.filter((s: any) => s.status?.toLowerCase() === 'aceita'));
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar serviços aceitos',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: 'Não foi possível carregar serviços aceitos', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout hideFooter>
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Serviços Aceitos</h1>
-          <Badge>{services.length} serviços</Badge>
-        </div>
+      <div className="min-h-screen bg-muted/30">
+        <div className="container py-8">
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+            <MarketplaceSidebar />
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold">Serviços Aceitos</h1>
+                <p className="text-muted-foreground">{services.length} serviços</p>
+              </div>
 
-        {services.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <p className="text-2xl text-muted-foreground mb-4">Nenhum serviço aceito</p>
-              <Button onClick={() => navigate('/dashboard/profissional/marketplace')}>
-                Buscar novos serviços
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {services.map((service) => (
-              <Card key={service.id}>
-                <CardHeader>
-                  <CardTitle>{service.title}</CardTitle>
-                  <Badge>{service.status}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Contratante: {service.contractor_name}</span>
-                    <span>{service.created_at}</span>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm">Ver detalhes</Button>
-                    <Button variant="outline" size="sm">Chat</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                </div>
+              ) : services.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <p className="text-xl text-muted-foreground mb-4">Nenhum serviço aceito</p>
+                    <Button onClick={() => navigate('/dashboard/profissional/servicos-disponiveis')}>Buscar novos serviços</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {services.map((service) => (
+                    <Card key={service.id} className="hover:shadow-md transition-all">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">{service.title}</CardTitle>
+                            <p className="text-sm text-muted-foreground">Contratante: {service.contractor_name}</p>
+                          </div>
+                          <Badge className="bg-emerald-500/10 text-emerald-600">Aceito</Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(service.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/mensagens')}>
+                              <MessageCircle className="w-4 h-4 mr-1" /> Chat
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
 }
-

@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import MarketplaceSidebar from '@/components/MarketplaceSidebar';
 
 interface Proposal {
   id: number;
@@ -16,7 +17,6 @@ interface Proposal {
   proposed_value: number;
   created_at: string;
   contractor_name?: string;
-  professional_name?: string;
 }
 
 export default function MinhasPropostas() {
@@ -25,29 +25,17 @@ export default function MinhasPropostas() {
   const navigate = useNavigate();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState<'sent' | 'received'>('sent');
 
   useEffect(() => {
-    if (user?.id) {
-      fetchProposals();
-    }
-  }, [user?.id, roleFilter]);
+    if (user?.id) fetchProposals();
+  }, [user?.id]);
 
   const fetchProposals = async () => {
     try {
-      setLoading(true);
-      const endpoint = roleFilter === 'sent'
-        ? `/api/service-proposals/my-proposals`  // Suas propostas enviadas
-        : `/api/service-proposals`; // Propostas recebidas
-
-      const response = await api.get(endpoint);
+      const response = await api.get('/api/service-proposals/my-proposals');
       setProposals(response.data);
     } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar propostas',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro', description: 'Não foi possível carregar propostas', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -55,95 +43,58 @@ export default function MinhasPropostas() {
 
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'aceita':
-        return <Badge variant="default">✅ Aceita</Badge>;
-      case 'recusada':
-        return <Badge variant="destructive">❌ Recusada</Badge>;
-      case 'pendente':
-      default:
-        return <Badge variant="secondary">⏳ Pendente</Badge>;
+      case 'aceita': return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200">✅ Aceita</Badge>;
+      case 'recusada': return <Badge variant="destructive">❌ Recusada</Badge>;
+      default: return <Badge variant="secondary">⏳ Pendente</Badge>;
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout hideFooter>
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Minhas Propostas</h1>
-            <p className="text-muted-foreground mt-2">
-              {roleFilter === 'sent' ? 'Propostas que você enviou' : 'Propostas recebidas'}
-              ({proposals.length})
-            </p>
-          </div>
+      <div className="min-h-screen bg-muted/30">
+        <div className="container py-8">
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+            <MarketplaceSidebar />
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-2xl font-bold">Minhas Propostas</h1>
+                <p className="text-muted-foreground">{proposals.length} propostas enviadas</p>
+              </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant={roleFilter === 'sent' ? 'default' : 'outline'}
-              onClick={() => setRoleFilter('sent')}
-            >
-              Enviadas
-            </Button>
-            <Button
-              variant={roleFilter === 'received' ? 'default' : 'outline'}
-              onClick={() => setRoleFilter('received')}
-            >
-              Recebidas
-            </Button>
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+                </div>
+              ) : proposals.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <p className="text-xl text-muted-foreground mb-4">Nenhuma proposta enviada</p>
+                    <Button onClick={() => navigate('/dashboard/profissional/servicos-disponiveis')}>Ver serviços abertos</Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {proposals.map((proposal) => (
+                    <Card key={proposal.id} className="hover:shadow-md transition-all">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{proposal.service_title}</CardTitle>
+                          {getStatusBadge(proposal.status)}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Valor: R$ {proposal.proposed_value?.toFixed(2)}</span>
+                          <span>{new Date(proposal.created_at).toLocaleDateString('pt-BR')}</span>
+                          {proposal.contractor_name && <span>Contratante: {proposal.contractor_name}</span>}
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {proposals.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <p className="text-2xl text-muted-foreground mb-4">
-                Nenhuma proposta encontrada
-              </p>
-              <Button onClick={() => navigate('/dashboard/profissional/marketplace')}>
-                Ver serviços abertos
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {proposals.map((proposal) => (
-              <Card key={proposal.id} className="hover:shadow-lg transition-all">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">{proposal.service_title}</CardTitle>
-                    {getStatusBadge(proposal.status)}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>Valor proposto: R$ {proposal.proposed_value?.toFixed(2)}</span>
-                    <span>Enviada em: {new Date(proposal.created_at).toLocaleDateString()}</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4 text-sm">
-                    {proposal.contractor_name && (
-                      <span>Contratante: {proposal.contractor_name}</span>
-                    )}
-                    {proposal.professional_name && (
-                      <span>Profissional: {proposal.professional_name}</span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
       </div>
     </Layout>
   );
 }
-
